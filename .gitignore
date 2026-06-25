@@ -1,1 +1,5 @@
 /venv
+/cvs
+/__pycache__
+.env
+jobagent.sqlite

@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from models.oferta import Oferta
 
 
+def devolver_oferta(db: Session, id: str):
+    return db.get(Oferta, id)
+
+
 # Esta es la funcion que devuelve True o False dependiendo de si esa oferta ya existe o no
 def existe_oferta(
     db: Session, id_plataforma: str, plataforma: str, titulo: str, empresa: str
@@ -43,12 +47,7 @@ def guardar_oferta(db: Session, datos: dict):
 
 # Esta es la funcion utilizada para mandarle las ofertas de trabajo que se encuentran pendientes de responder sus preguntas
 def devolver_ofertas_pendientes(db: Session, limite: int = 5):
-    return (
-        db.query(Oferta)
-        .filter(Oferta.estado == "PENDIENTE_REVISION")
-        .limit(limite)
-        .all()
-    )
+    return db.query(Oferta).filter(Oferta.estado == "pendientes").limit(limite).all()
 
 
 # Funcion para modificar los datos de una oferta, asi como añadir las respuestas a las preguntas
@@ -72,7 +71,14 @@ def modificar_datos_oferta(db: Session, id: str, datos: dict):
 def devolver_ofertas_paginadas(db: Session, pagina: int = 1, limite: int = 10):
     salto = (pagina - 1) * limite
 
-    return db.query(Oferta).order_by(desc(Oferta.id)).limit(limite).offset(salto).all()
+    return (
+        db.query(Oferta)
+        .filter(Oferta.eliminado == False)
+        .order_by(desc(Oferta.id))
+        .limit(limite)
+        .offset(salto)
+        .all()
+    )
 
 
 def eliminar_oferta(db: Session, id: str):

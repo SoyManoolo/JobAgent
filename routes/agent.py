@@ -26,7 +26,7 @@ def ofertas_pend(db: Session = Depends(get_db)):
 
             datos_actualizar = {
                 "preguntas_formulario": resultado,
-                "estado": "PROCESADA",
+                "estado": "aprobado",
             }
             ofertas.modificar_datos_oferta(db, oferta.id, datos_actualizar)
         except Exception as e:

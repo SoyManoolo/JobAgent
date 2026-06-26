@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from sqlalchemy import JSON, Boolean, Date, String, DateTime, Enum, func, null
 from sqlalchemy.orm import Mapped, MappedCollection, mapped_column
 from database import Base
@@ -15,7 +15,7 @@ class Tipo_trabajo(str, PyEnum):
 
 class Estado(str, PyEnum):
     DESCARTADO = "descartado"
-    PENDIENTE_REVISION = "pendiente_revision"
+    PENDIENTE_REVISION = "pendiente"
     APROBADO = "aprobado"
     APLICADO = "aplicado"
 
@@ -40,3 +40,4 @@ class Oferta(Base):
         DateTime, default=func.now(), nullable=False
     )
     fecha_aplicacion: Mapped[datetime] = mapped_column(DateTime)
+    notas: Mapped[str] = mapped_column(String)

@@ -12,10 +12,11 @@ class OfertaCreate(BaseModel):
     url: str
     descripcion: str
     tipo_trabajo: str
-    estado: str = "PENDIENTE_REVISION"
+    estado: str = "pendiente"
     preguntas_formulario: Optional[List[Dict]] = None
     fecha_oferta: datetime
-    fecha_aplicacion: datetime
+    fecha_aplicacion: Optional[datetime] = None
+    notas: Optional[str] = None
 
 
 @field_validator("url")

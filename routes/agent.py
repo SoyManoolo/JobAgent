@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
+from models.oferta import Estado
 from schemas.oferta_schema import OfertaCreate
 from services import ofertas
 from agent import llm
@@ -20,20 +21,31 @@ def get_db():
 def ofertas_pend(db: Session = Depends(get_db)):
     lista_ofertas = ofertas.devolver_ofertas_pendientes(db)
 
+    procesadas = 0
+    errores = 0
+
     for oferta in lista_ofertas:
+        if oferta.estado != Estado.EXTRAIDA:
+            continue
+
         try:
-            resultado = llm.analizar_oferta()
+            resultado = llm.analizar_oferta(oferta.descripcion)
 
             datos_actualizar = {
-                "preguntas_formulario": resultado,
-                "estado": "aprobado",
+                "estado": Estado.ANALIZADA,
             }
             ofertas.modificar_datos_oferta(db, oferta.id, datos_actualizar)
+            procesadas += 1
+
         except Exception as e:
             print(f"Error procesando la oferta {oferta.id}: {e}")
+
+            ofertas.modificar_datos_oferta(db, oferta.id, {"estado": Estado.ERROR})
+
+            errores += 1
         continue
 
-    return {"procesadas": len(lista_ofertas)}
+    return {"procesadas": procesadas, "errores": errores, "total": len(lista_ofertas)}
 
 
 @router.post("/ofertas")

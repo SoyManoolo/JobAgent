@@ -1,20 +1,27 @@
 import requests
 import json
-import dotenv
-from agen
+import os
+from dotenv import load_dotenv
+from agent.prompts import answer_question
+from agent.prompts.analyze_offer import ANALYZE_OFFER_PROMPT
+from agent.prompts.answer_question import ANSWER_QUESTION_PROMPT
 
-URL_OLLAMA = ""
+load_dotenv()
+
+URL_OLLAMA = os.getenv("OLLAMA_URL") or "localhost:11434/v1/"
+MODEL = os.getenv("OLLAMA_MODEL")
 
 
 def analizar_oferta(descripcion: str) -> dict:
+    prompt = ANALYZE_OFFER_PROMPT.format(oferta=descripcion)
+
     payload = {
-        "model": "",
+        "model": MODEL,
         "messages": [
             {
                 "role": "system",
-                "content": "Debes de analizar esta oferta y decidir si encaja con mi perfil, no tengo porque encajar al 100%, pero si por lo menos un 75%. Además de que debes elegir que tipo de perfil encaja más con el trabajo: BACKEND, FULLSTACK o IA",
-            },
-            {"role": "system", "content": f"Oferta:\n{descripcion}"},
+                "content": prompt,
+            }
         ],
         "format": "json",
         "stream": False,
@@ -22,18 +29,21 @@ def analizar_oferta(descripcion: str) -> dict:
 
     response = requests.post(URL_OLLAMA, json=payload)
     response.raise_for_status()
-    return json.loads(response.json()["message"]["content"])
+
+    contenido = response.json()["message"]["content"]
+
+    return json.loads(contenido)
 
 
 def responder_preguntas(preguntas: str) -> dict:
+    prompt = ANSWER_QUESTION_PROMPT.format(pregunta=preguntas)
     payload = {
         "model": "",
         "messages": [
             {
                 "role": "system",
-                "content": "Debes de responder las preguntas basándote en la información de mi curriculum y mis datos",
-            },
-            {"role": "system", "content": f"Preguntas:\n{preguntas}"},
+                "content": prompt,
+            }
         ],
         "format": "json",
         "stream": False,
@@ -41,4 +51,7 @@ def responder_preguntas(preguntas: str) -> dict:
 
     response = requests.post(URL_OLLAMA, json=payload)
     response.raise_for_status()
-    return json.loads(response.json()["message"]["content"])
+
+    contenido = response.json()["message"]["content"]
+
+    return json.loads(contenido)

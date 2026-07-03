@@ -1,26 +1,26 @@
-from pydantic import AnyUrl, BaseModel, field_validator
+from pydantic import BaseModel, field_validator, AnyUrl
 from datetime import datetime
 from typing import Optional, List, Dict
 
 
 class OfertaCreate(BaseModel):
+    # IDENTIFICACIÓN
     id: str
     id_plataforma: str
     plataforma: str
+    url: str
+
+    # INFORMACIÓN BÁSICA
     titulo: str
     empresa: str
-    url: str
     descripcion: str
-    tipo_trabajo: str
-    estado: str = "pendiente"
-    preguntas_formulario: Optional[List[Dict]] = None
-    fecha_oferta: datetime
-    fecha_aplicacion: Optional[datetime] = None
-    notas: Optional[str] = None
 
+    # OPCIONALES
+    fecha_oferta: Optional[datetime] = None
 
-@field_validator("url")
-@classmethod
-def validar_url(cls, v: str) -> str:
-    AnyUrl(v)
-    return v
+    # VALIDACIONES
+    @field_validator("url")
+    @classmethod
+    def validar_url(cls, v: str) -> str:
+        AnyUrl(v)
+        return v

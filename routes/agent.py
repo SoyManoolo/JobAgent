@@ -32,8 +32,18 @@ def ofertas_pend(db: Session = Depends(get_db)):
             resultado = llm.analizar_oferta(oferta.descripcion)
 
             datos_actualizar = {
+                "perfil_recomendado": resultado["perfil_recomendado"],
+                "idioma_oferta": resultado["idioma"],
+                "seniority": resultado["seniority"],
+                "score_backend": resultado["score_backend"],
+                "score_fullstack": resultado["score_fullstack"],
+                "score_ia": resultado["score_ia"],
+                "score_encaje": resultado["score_encaje"],
+                "resumen": resultado["resumen"],
+                "justificacion": resultado["justificacion"],
                 "estado": Estado.ANALIZADA,
             }
+
             ofertas.modificar_datos_oferta(db, oferta.id, datos_actualizar)
             procesadas += 1
 

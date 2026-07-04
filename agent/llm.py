@@ -19,7 +19,7 @@ def analizar_oferta(descripcion: str) -> dict:
         "model": MODEL,
         "messages": [
             {
-                "role": "system",
+                "role": "user",
                 "content": prompt,
             }
         ],
@@ -32,7 +32,25 @@ def analizar_oferta(descripcion: str) -> dict:
 
     contenido = response.json()["message"]["content"]
 
-    return json.loads(contenido)
+    resultado = json.loads(contenido)
+
+    campos = [
+        "perfil_recomendado",
+        "idioma",
+        "seniority",
+        "score_backend",
+        "score_fullstack",
+        "score_ia",
+        "score_encaje",
+        "resumen",
+        "justificacion",
+    ]
+
+    for campo in campos:
+        if campo not in resultado:
+            raise ValueError(f"Falta el campo '{campo}'")
+
+    return resultado
 
 
 def responder_preguntas(preguntas: str) -> dict:

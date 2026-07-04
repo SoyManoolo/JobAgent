@@ -1,6 +1,6 @@
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
-from models.oferta import Oferta
+from models.oferta import Estado, Oferta
 
 
 def devolver_oferta(db: Session, id: str):
@@ -47,7 +47,12 @@ def guardar_oferta(db: Session, datos: dict):
 
 # Esta es la funcion utilizada para mandarle las ofertas de trabajo que se encuentran pendientes de responder sus preguntas
 def devolver_ofertas_pendientes(db: Session, limite: int = 5):
-    return db.query(Oferta).filter(Oferta.estado == "pendientes").limit(limite).all()
+    return (
+        db.query(Oferta)
+        .filter(Oferta.estado == Estado.PENDIENTE_REVISION)
+        .limit(limite)
+        .all()
+    )
 
 
 # Funcion para modificar los datos de una oferta, asi como añadir las respuestas a las preguntas

@@ -1,5 +1,6 @@
 /venv
 /cvs
 __pycache__
+profile
 .env
 jobagent.sqlite

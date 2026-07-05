@@ -40,7 +40,7 @@ def ofertas_pend(db: Session = Depends(get_db)):
                 "score_ia": resultado["score_ia"],
                 "score_encaje": resultado["score_encaje"],
                 "resumen": resultado["resumen"],
-                "justificacion": resultado["justificacion"],
+                "motivo_encaje": resultado["motivo_encaje"],
                 "estado": Estado.ANALIZADA,
             }
 

@@ -1,2 +1,2 @@
 from .ofertas import *
-from .dashboard import *
+from .dashboard_service import *

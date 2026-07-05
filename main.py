@@ -5,10 +5,13 @@ from routes.agent import router as agent_routes
 
 app = FastAPI(title="JobAgent API", version="0.1.0")
 
-app.add_middleware(CORSMiddleware)
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+)
 
 app.include_router(ofertas_routes, prefix="/api/v1")
 app.include_router(agent_routes, prefix="/api/v1")
+
 
 @app.get("/")
 def read_root():

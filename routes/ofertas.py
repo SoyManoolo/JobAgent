@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException, APIRouter, Depends, status
+from fastapi import HTTPException, APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from services import ofertas as ofertas_service
+from repositories import oferta_repository
 
 router = APIRouter(prefix="/ofertas", tags=["Ofertas"])
 
@@ -16,12 +16,12 @@ def get_db():
 
 @router.get("/", status_code=status.HTTP_200_OK)
 def obtener_ofertas(pagina: int = 1, limite: int = 10, db: Session = Depends(get_db)):
-    return ofertas_service.devolver_ofertas_paginadas(db, pagina, limite)
+    return oferta_repository.devolver_ofertas_paginadas(db, pagina, limite)
 
 
 @router.get("/{id}")
 def obtener_oferta(id: str, db: Session = Depends(get_db)):
-    oferta = ofertas_service.devolver_oferta(db, id)
+    oferta = oferta_repository.obtener_oferta(db, id)
     if not oferta:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")
     return oferta
@@ -35,7 +35,7 @@ def aplicar_oferta(id: str, db: Session = Depends(get_db)):
 
 @router.patch("/{id}", status_code=status.HTTP_200_OK)
 def modificar_respuestas(id: str, preguntas: dict, db: Session = Depends(get_db)):
-    oferta_actualizada = ofertas_service.modificar_datos_oferta(db, id, preguntas)
+    oferta_actualizada = oferta_repository.modificar_datos_oferta(db, id, preguntas)
 
     if not oferta_actualizada:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")
@@ -48,7 +48,7 @@ def eliminar_oferta(
     id: str,
     db: Session = Depends(get_db),
 ):
-    oferta_eliminada = ofertas_service.eliminar_oferta(db, id)
+    oferta_eliminada = oferta_repository.eliminar_oferta(db, id)
 
     if not oferta_eliminada:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")

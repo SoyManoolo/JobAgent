@@ -8,7 +8,7 @@ from agent.prompts.answer_question import ANSWER_QUESTION_PROMPT
 
 load_dotenv()
 
-URL_OLLAMA = os.getenv("OLLAMA_URL") or "localhost:11434/v1/"
+URL_OLLAMA = os.getenv("OLLAMA_URL") or "http://localhost:11434/api/chat"
 MODEL = os.getenv("OLLAMA_MODEL")
 
 
@@ -56,7 +56,7 @@ def analizar_oferta(descripcion: str) -> dict:
 def responder_preguntas(preguntas: str) -> dict:
     prompt = ANSWER_QUESTION_PROMPT.format(pregunta=preguntas)
     payload = {
-        "model": "",
+        "model": MODEL,
         "messages": [
             {
                 "role": "system",

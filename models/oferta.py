@@ -7,10 +7,10 @@ from typing import Optional
 
 
 # Definimos las enumeraciones locales para tipo_trabajo y estado_oferta
-class Tipo_trabajo(str, PyEnum):
-    BACKEND = "backend"
-    FULLSTACK = "fullstack"
-    IA = "ia"
+# class Tipo_trabajo(str, PyEnum):
+#    BACKEND = "backend"
+#    FULLSTACK = "fullstack"
+#    IA = "ia"
 
 
 class Estado(str, PyEnum):
@@ -47,6 +47,8 @@ class Oferta(Base):
     titulo: Mapped[str] = mapped_column(String(200), nullable=False)
     empresa: Mapped[str] = mapped_column(String(200), nullable=False)
     descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+    salario: Mapped[str] = mapped_column(String, nullable=True)
+    ubicacion: Mapped[str] = mapped_column(String, nullable=True)
 
     # ESTADO Y CONTROL
     estado: Mapped[Estado] = mapped_column(Enum(Estado), nullable=False)
@@ -55,7 +57,7 @@ class Oferta(Base):
     notas: Mapped[Optional[str]] = mapped_column(Text)
 
     # FECHAS
-    fecha_oferta: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    # fecha_oferta: Mapped[Optional[datetime]] = mapped_column(DateTime)
     fecha_descubrimiento: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
     )

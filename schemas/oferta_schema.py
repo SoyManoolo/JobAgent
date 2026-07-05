@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator, AnyUrl
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import Optional
 
 
 class OfertaCreate(BaseModel):
@@ -14,8 +14,10 @@ class OfertaCreate(BaseModel):
     titulo: str
     empresa: str
     descripcion: str
+    ubicacion: str
 
     # OPCIONALES
+    salario: Optional[str] = None
     fecha_oferta: Optional[datetime] = None
 
     # VALIDACIONES

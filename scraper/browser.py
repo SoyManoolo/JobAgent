@@ -8,7 +8,7 @@ def crear_navegador(persistent=False):
         browser = None
         context = playwright.chromium.launch_persistent_context(
             user_data_dir="scraper/profile",
-            headless=False,
+            headless=True,
         )
 
         page = context.new_page() if len(context.pages) == 0 else context.pages[0]

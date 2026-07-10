@@ -6,6 +6,6 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine("sqlite:///jobagent.sqlite", echo=True)
+engine = create_engine("sqlite:///jobagent.sqlite", echo=False)
 
 SessionLocal = sessionmaker(autoflush=False, bind=engine, autocommit=False)

@@ -1,55 +1,47 @@
-from fastapi import HTTPException, APIRouter, Depends, status
-from sqlalchemy.orm import Session
-from database import SessionLocal
-from repositories import oferta_repository
+from typing import Optional
+from fastapi import APIRouter, HTTPException, status
+from models.oferta import Estado, PerfilRecomendado
+from services import oferta_service
 
 router = APIRouter(prefix="/ofertas", tags=["Ofertas"])
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 @router.get("/", status_code=status.HTTP_200_OK)
-def obtener_ofertas(pagina: int = 1, limite: int = 10, db: Session = Depends(get_db)):
-    return oferta_repository.devolver_ofertas_paginadas(db, pagina, limite)
+def obtener_ofertas(
+    pagina: int = 1,
+    limite: int = 10,
+    estado: Optional[Estado] = None,
+    perfil: Optional[PerfilRecomendado] = None,
+    score_min: Optional[int] = None,
+    empresa: Optional[str] = None,
+):
+    return oferta_service.obtener_ofertas(
+        pagina, limite, estado, perfil, score_min, empresa
+    )
 
 
 @router.get("/{id}")
-def obtener_oferta(id: str, db: Session = Depends(get_db)):
-    oferta = oferta_repository.obtener_oferta(db, id)
+def obtener_oferta(id: str):
+    oferta = oferta_service.obtener_oferta_id(id)
     if not oferta:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")
+
     return oferta
 
 
-@router.post("/{id}/aplicar", status_code=status.HTTP_200_OK)
-def aplicar_oferta(id: str, db: Session = Depends(get_db)):
-    # Aqui tengo que llamar a la funcion que se encarga de llamar al modelo de ollama para que haga la aplicacion a la oferta de trabajo
-    return {}
-
-
 @router.patch("/{id}", status_code=status.HTTP_200_OK)
-def modificar_respuestas(id: str, preguntas: dict, db: Session = Depends(get_db)):
-    oferta_actualizada = oferta_repository.modificar_datos_oferta(db, id, preguntas)
-
-    if not oferta_actualizada:
+def modificar_respuestas(id: str, datos: dict):
+    oferta = oferta_service.modificar_oferta(id, datos)
+    if not oferta:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")
 
-    return oferta_actualizada
+    return oferta
 
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
-def eliminar_oferta(
-    id: str,
-    db: Session = Depends(get_db),
-):
-    oferta_eliminada = oferta_repository.eliminar_oferta(db, id)
-
-    if not oferta_eliminada:
+def eliminar_oferta(id: str):
+    oferta = oferta_service.eliminar_oferta(id)
+    if not oferta:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")
-    return {"status": "deleted", "id": id}
+
+    return oferta

@@ -1,9 +1,11 @@
-from models.oferta import Estado, Oferta
+from typing import Optional
+from models.oferta import Estado, Oferta, PerfilRecomendado
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import Uuid, func, desc
+import uuid
 
 
-def obtener_oferta(db: Session, id: str):
+def obtener_oferta_id(db: Session, id: str):
     return db.get(Oferta, id)
 
 
@@ -49,7 +51,12 @@ def guardar_ofertas(db: Session, ofertas):
                 ofertas_duplicadas += 1
                 continue
 
-            nueva_oferta = Oferta(**oferta)
+            datos = oferta.copy()
+
+            datos["id"] = str(uuid.uuid4())
+            datos["estado"] = Estado.EXTRAIDA
+
+            nueva_oferta = Oferta(**datos)
 
             db.add(nueva_oferta)
 
@@ -88,22 +95,41 @@ def modificar_datos_oferta(db: Session, id: str, datos: dict):
     return oferta
 
 
-def obtener_ofertas_estado(db: Session, estado: Estado):
-    return db.query(Oferta).filter(Oferta.estado == estado).all()
+def obtener_ofertas_estado(db: Session, estado: Estado, limite: Optional[int] = 10):
+    query = db.query(Oferta).filter(Oferta.estado == estado)
+    if limite:
+        query = query.limit(limite)
+    return query.all()
 
 
-# Funcion para devolver de manera paginada las ofertas para mostrarlas en la interfaz
-def devolver_ofertas_paginadas(db: Session, pagina: int = 1, limite: int = 10):
+def devolver_ofertas(
+    db: Session,
+    pagina: int = 1,
+    limite: int = 10,
+    estado: Optional[Estado] = None,
+    perfil: Optional[PerfilRecomendado] = None,
+    score_min: Optional[int] = None,
+    empresa: Optional[str] = None,
+):
     salto = (pagina - 1) * limite
 
-    return (
-        db.query(Oferta)
-        .filter(Oferta.eliminado == False)
-        .order_by(desc(Oferta.id))
-        .limit(limite)
-        .offset(salto)
-        .all()
-    )
+    query = db.query(Oferta)
+
+    query = query.filter(Oferta.eliminado == False)
+
+    if estado is not None:
+        query = query.filter(Oferta.estado == estado)
+
+    if perfil is not None:
+        query = query.filter(Oferta.perfil_recomendado == perfil)
+
+    if score_min is not None:
+        query = query.filter(Oferta.score_encaje >= score_min)
+
+    if empresa:
+        query = query.filter(Oferta.empresa.ilike(f"%{empresa}%"))
+
+    return query.order_by(desc(Oferta.id)).offset(salto).limit(limite).all()
 
 
 def eliminar_oferta(db: Session, id: str):

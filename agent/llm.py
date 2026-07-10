@@ -3,7 +3,7 @@ import json
 import os
 from dotenv import load_dotenv
 from agent.prompts import answer_question
-from agent.prompts.analyze_offer import ANALYZE_OFFER_PROMPT
+from agent.prompts.analyze_offer import build_analyze_prompt
 from agent.prompts.answer_question import ANSWER_QUESTION_PROMPT
 
 load_dotenv()
@@ -11,46 +11,70 @@ load_dotenv()
 URL_OLLAMA = os.getenv("OLLAMA_URL") or "http://localhost:11434/api/chat"
 MODEL = os.getenv("OLLAMA_MODEL")
 
+PERFILES = {"backend", "fullstack", "ia", "hibrido", "desconocido"}
+IDIOMAS = {"es", "en", "otro"}
+SENIORITY = {"junior", "mid", "senior", "desconocido"}
+
 
 def analizar_oferta(descripcion: str) -> dict:
-    prompt = ANALYZE_OFFER_PROMPT.format(oferta=descripcion)
+    try:
+        prompt = build_analyze_prompt(descripcion)
 
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        "format": "json",
-        "stream": False,
-    }
+        payload = {
+            "model": MODEL,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            "format": "json",
+            "stream": False,
+        }
+        print("Enviando peticion a Ollama...")
+        response = requests.post(URL_OLLAMA, json=payload)
+        response.raise_for_status()
 
-    response = requests.post(URL_OLLAMA, json=payload)
-    response.raise_for_status()
+        raw = response.json()
 
-    contenido = response.json()["message"]["content"]
+        contenido = raw["message"]["content"]
+        print("Contenido: ", contenido)
 
-    resultado = json.loads(contenido)
+        resultado = json.loads(contenido)
 
-    campos = [
-        "perfil_recomendado",
-        "idioma",
-        "seniority",
-        "score_backend",
-        "score_fullstack",
-        "score_ia",
-        "score_encaje",
-        "resumen",
-        "justificacion",
-    ]
+        resultado["perfil_recomendado"] = resultado["perfil_recomendado"].lower()
+        resultado["idioma"] = resultado["idioma"].lower()
+        resultado["seniority"] = resultado["seniority"].lower()
 
-    for campo in campos:
-        if campo not in resultado:
-            raise ValueError(f"Falta el campo '{campo}'")
+        if resultado["perfil_recomendado"] not in PERFILES:
+            resultado["perfil_recomendado"] = "desconocido"
 
-    return resultado
+        if resultado["idioma"] not in IDIOMAS:
+            resultado["idioma"] = "otro"
+
+        if resultado["seniority"] not in SENIORITY:
+            resultado["seniority"] = "desconocido"
+
+        campos = [
+            "perfil_recomendado",
+            "idioma",
+            "seniority",
+            "score_backend",
+            "score_fullstack",
+            "score_ia",
+            "score_encaje",
+            "resumen",
+            "motivo_encaje",
+        ]
+
+        for campo in campos:
+            if campo not in resultado:
+                raise ValueError(f"Falta el campo '{campo}'")
+
+        return resultado
+    except Exception as e:
+        print(e)
+        raise
 
 
 def responder_preguntas(preguntas: str) -> dict:

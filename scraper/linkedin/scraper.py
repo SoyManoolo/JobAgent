@@ -111,6 +111,14 @@ def extraer_ofertas(busqueda: str) -> list[dict]:
                     oferta.locator(".artdeco-entity-lockup__subtitle").first
                 )
 
+                aplicacion_sencilla = (
+                    oferta.locator(
+                        "li.job-card-container__footer-item:has("
+                        'svg[data-test-icon="linkedin-bug-color-small"])'
+                    ).count()
+                    > 0
+                )
+
                 metadatos = oferta.locator(".job-card-container__metadata-wrapper")
 
                 ubicacion = obtener_texto(metadatos.first)
@@ -139,6 +147,7 @@ def extraer_ofertas(busqueda: str) -> list[dict]:
                         "plataforma": "linkedin",
                         "titulo": titulo_texto,
                         "empresa": empresa,
+                        "aplicacion_sencilla": aplicacion_sencilla,
                         "ubicacion": ubicacion,
                         "salario": salario,
                         "url": link,
@@ -162,4 +171,3 @@ def extraer_ofertas(busqueda: str) -> list[dict]:
     finally:
         context.close()
         playwright.stop()
-

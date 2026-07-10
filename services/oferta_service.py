@@ -16,11 +16,13 @@ def obtener_ofertas(
     perfil: Optional[PerfilRecomendado] = None,
     score_min: Optional[int] = None,
     empresa: Optional[str] = None,
+    aplicacion_sencilla: Optional[bool] = None,
 ):
     with SessionLocal() as db:
-        return oferta_repository.devolver_ofertas(
-            db, pagina, limite, estado, perfil, score_min, empresa
+        ofertas, total = oferta_repository.devolver_ofertas(
+            db, pagina, limite, estado, perfil, score_min, empresa, aplicacion_sencilla
         )
+    return {"total": total, "pagina": pagina, "limite": limite, "resultados": ofertas}
 
 
 def eliminar_oferta(id):

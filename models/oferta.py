@@ -53,7 +53,6 @@ class Oferta(Base):
     # ESTADO Y CONTROL
     estado: Mapped[Estado] = mapped_column(Enum(Estado), nullable=False)
     eliminado: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
     notas: Mapped[Optional[str]] = mapped_column(Text)
 
     # FECHAS
@@ -64,6 +63,9 @@ class Oferta(Base):
     fecha_aplicacion: Mapped[Optional[datetime]] = mapped_column(DateTime)
 
     # FORMULARIO
+    aplicacion_sencilla: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
     preguntas_formulario: Mapped[Optional[list[dict]]] = mapped_column(JSON)
 
     # CLASIFICACIÓN IA

@@ -14,9 +14,10 @@ def obtener_ofertas(
     perfil: Optional[PerfilRecomendado] = None,
     score_min: Optional[int] = None,
     empresa: Optional[str] = None,
+    aplicacion_sencilla: Optional[bool] = None,
 ):
     return oferta_service.obtener_ofertas(
-        pagina, limite, estado, perfil, score_min, empresa
+        pagina, limite, estado, perfil, score_min, empresa, aplicacion_sencilla
     )
 
 

@@ -15,6 +15,7 @@ class OfertaCreate(BaseModel):
     empresa: str
     descripcion: str
     ubicacion: str
+    aplicacion_sencilla: bool
 
     # OPCIONALES
     salario: Optional[str] = None

@@ -1,18 +1,7 @@
-from fastapi import HTTPException, APIRouter, Depends, status
-from sqlalchemy.orm import Session
-from database import SessionLocal
-from repositories import oferta_repository
+from fastapi import APIRouter, status
 from services import scraper_service
 
 router = APIRouter(prefix="/scraper", tags=["Scraper"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/linkedin", status_code=status.HTTP_200_OK)

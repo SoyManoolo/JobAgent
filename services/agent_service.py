@@ -7,7 +7,7 @@ from database import SessionLocal
 def procesar_ofertas_extraidas():
     with SessionLocal() as db:
         ofertas = oferta_repository.obtener_ofertas_estado(
-            db, estado=Estado.ANALIZADA, limite=None
+            db, estado=Estado.EXTRAIDA, limite=10
         )
 
         total = len(ofertas)

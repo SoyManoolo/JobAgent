@@ -1,7 +1,7 @@
 from typing import Optional
 from models.oferta import Estado, Oferta, PerfilRecomendado
 from sqlalchemy.orm import Session
-from sqlalchemy import Uuid, func, desc
+from sqlalchemy import func, desc
 import uuid
 
 
@@ -110,6 +110,7 @@ def devolver_ofertas(
     perfil: Optional[PerfilRecomendado] = None,
     score_min: Optional[int] = None,
     empresa: Optional[str] = None,
+    aplicacion_sencilla: Optional[bool] = None,
 ):
     salto = (pagina - 1) * limite
 
@@ -129,7 +130,14 @@ def devolver_ofertas(
     if empresa:
         query = query.filter(Oferta.empresa.ilike(f"%{empresa}%"))
 
-    return query.order_by(desc(Oferta.id)).offset(salto).limit(limite).all()
+    if aplicacion_sencilla is not None:
+        query = query.filter(Oferta.aplicacion_sencilla == aplicacion_sencilla)
+
+    total = query.count()
+
+    ofertas = query.order_by(desc(Oferta.id)).offset(salto).limit(limite).all()
+
+    return ofertas, total
 
 
 def eliminar_oferta(db: Session, id: str):

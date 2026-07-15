@@ -169,18 +169,3 @@ def obtener_stats(db: Session):
         "pendientes": pendientes,
         "descartadas": descartadas,
     }
-
-
-def modificar_notas(db: Session, id: str, nota: str):
-    oferta = db.get(Oferta, id)
-
-    if not oferta:
-        return None
-
-    oferta.notas = nota
-
-    db.commit()
-
-    db.refresh(oferta)
-
-    return oferta

@@ -9,6 +9,11 @@ def extraer_ofertas_linkedin(busqueda: str = "Backend"):
     return scraper_service.ejecutar_scraper_linkedin(busqueda)
 
 
+@router.post("/linkedin/easyapply/{id}", status_code=status.HTTP_200_OK)
+def extraer_preguntas_linkedin(id: str):
+    return scraper_service.ejecutar_scraper_preguntas_linkedin(id)
+
+
 @router.post("/infojobs", status_code=status.HTTP_200_OK)
 def extraer_ofertas_infojobs():
     return ""

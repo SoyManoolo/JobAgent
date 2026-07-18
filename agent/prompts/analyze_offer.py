@@ -15,11 +15,10 @@ No añadas explicaciones.
 El JSON debe tener exactamente esta estructura:
 
 {{
-    "perfil_recomendado": "backend | fullstack | ia | hibrido | desconocido",
+    "perfil_recomendado": "backend | ia | desconocido",
     "idioma": "es | en | otro",
     "seniority": "junior | mid | senior | desconocido",
     "score_backend": 0,
-    "score_fullstack": 0,
     "score_ia": 0,
     "score_encaje": 0,
     "resumen": "",
@@ -28,13 +27,11 @@ El JSON debe tener exactamente esta estructura:
 
 Criterios de perfil:
 - backend: APIs, servicios, bases de datos, backend, Python, FastAPI, Java, Spring Boot, Node.js, Express, NestJS.
-- fullstack: backend + frontend, React, Angular, TypeScript, Next.js, Vue, aplicaciones web completas.
 - ia: IA aplicada, LLMs, automatización inteligente, ML, data science, NLP, RAG, agentes, Python para IA.
-- hibrido: combinación clara de backend/fullstack con IA o automatización.
 - desconocido: oferta no tecnológica, genérica, sysadmin puro, soporte IT puro, candidatura espontánea o sin rol claro.
 
 Reglas de scoring:
-- score_backend, score_fullstack y score_ia miden afinidad técnica con cada perfil.
+- score_backend y score_ia miden afinidad técnica con cada perfil.
 - score_encaje mide si merece la pena que el candidato revise/aplique a la oferta.
 - No bases score_encaje solo en tecnologías coincidentes.
 - Penaliza fuerte si el seniority requerido es superior al perfil junior del candidato.
@@ -61,9 +58,9 @@ Reglas concretas:
 - Si pide 2-3 años de experiencia, score_encaje máximo 75.
 - Si pide 0-1 años, prácticas, trainee, junior o formación, no penalices por experiencia.
 - Si pide tecnologías del stack principal del candidato y es junior/mid bajo, puede superar 80.
-- Si combina desarrollo backend/fullstack con IA aplicada o automatización real, puede superar 85.
+- Si combina desarrollo backend con IA aplicada o automatización real, puede superar 85.
 - perfil_recomendado debe corresponder al score técnico más alto.
-- Si dos perfiles tienen scores similares y ambos son relevantes, usa "hibrido".
+- Si backend e IA tienen scores similares y ambos son relevantes, elige el perfil que mejor represente la función principal del puesto.
 - Todos los scores deben ser enteros entre 0 y 100.
 - resumen máximo 30 palabras.
 - motivo_encaje debe explicar brevemente los principales puntos a favor y en contra.
@@ -74,4 +71,3 @@ Oferta:
 {oferta}
 --------------------
 """
-

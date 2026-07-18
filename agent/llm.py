@@ -11,7 +11,7 @@ load_dotenv()
 URL_OLLAMA = os.getenv("OLLAMA_URL") or "http://localhost:11434/api/chat"
 MODEL = os.getenv("OLLAMA_MODEL")
 
-PERFILES = {"backend", "fullstack", "ia", "hibrido", "desconocido"}
+PERFILES = {"backend", "ia", "desconocido"}
 IDIOMAS = {"es", "en", "otro"}
 SENIORITY = {"junior", "mid", "senior", "desconocido"}
 
@@ -60,7 +60,6 @@ def analizar_oferta(descripcion: str) -> dict:
             "idioma",
             "seniority",
             "score_backend",
-            "score_fullstack",
             "score_ia",
             "score_encaje",
             "resumen",

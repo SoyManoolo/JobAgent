@@ -3,6 +3,10 @@ from playwright.sync_api import Error as PlaywrightError
 from scraper.browser import crear_navegador
 
 
+class SolicitudNoDisponibleError(Exception):
+    pass
+
+
 def extraer_preguntas(link: str) -> list[dict]:
     playwright, _, context, page = crear_navegador(
         persistent=True,
@@ -24,10 +28,16 @@ def extraer_preguntas(link: str) -> list[dict]:
             'a[aria-label="Solicitud sencilla"], a[href*="openSDUIApplyFlow=true"]'
         ).first
 
-        easy_apply.wait_for(
-            state="visible",
-            timeout=60_000,
-        )
+        try:
+            easy_apply.wait_for(
+                state="visible",
+                timeout=5_000,
+            )
+        except TimeoutError as error:
+            raise SolicitudNoDisponibleError(
+                "La oferta ya no admite Solicitud Sencilla"
+            ) from error
+
         easy_apply.click()
 
         # Paso 1: datos de contacto
@@ -195,4 +205,3 @@ def extraer_preguntas_paso(page) -> list[dict]:
             preguntas.append(pregunta)
 
     return preguntas
-

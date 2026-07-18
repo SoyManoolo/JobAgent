@@ -1,6 +1,9 @@
-from operator import le
+from operator import length_hint
 from scraper.linkedin.jobs_scraper import extraer_ofertas
-from scraper.linkedin.easy_apply_scraper import extraer_preguntas
+from scraper.linkedin.easy_apply_scraper import (
+    extraer_preguntas,
+    SolicitudNoDisponibleError,
+)
 from database import SessionLocal
 from repositories import oferta_repository
 
@@ -31,7 +34,17 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
         if not oferta.aplicacion_sencilla:
             raise ValueError("La oferta no tiene solicitud sencilla")
 
-        preguntas = extraer_preguntas(oferta.url)
+        try:
+            preguntas = extraer_preguntas(oferta.url)
+
+        except SolicitudNoDisponibleError:
+            eliminada = oferta_repository.eliminar_oferta(db, id)
+
+            return {
+                "oferta_id": id,
+                "disponible": False,
+                "oferta_eliminada": bool(eliminada),
+            }
 
         resultado = oferta_repository.modificar_datos_oferta(
             db, id, {"preguntas_formulario": preguntas}
@@ -39,7 +52,8 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
 
         return {
             "oferta_id": id,
+            "disponible": True,
             "total_preguntas": len(preguntas),
             "preguntas": preguntas,
-            "resultado": resultado,
+            "actualizada": resultado is not None,
         }

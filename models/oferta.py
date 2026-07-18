@@ -6,13 +6,6 @@ from enum import Enum as PyEnum
 from typing import Optional
 
 
-# Definimos las enumeraciones locales para tipo_trabajo y estado_oferta
-# class Tipo_trabajo(str, PyEnum):
-#    BACKEND = "backend"
-#    FULLSTACK = "fullstack"
-#    IA = "ia"
-
-
 class Estado(str, PyEnum):
     EXTRAIDA = "extraida"  # viene del scraping
     ANALIZADA = "analizada"  # ya tiene resultado de IA
@@ -28,9 +21,7 @@ class Estado(str, PyEnum):
 
 class PerfilRecomendado(str, PyEnum):
     BACKEND = "backend"
-    FULLSTACK = "fullstack"
     IA = "ia"
-    HIBRIDO = "hibrido"
     DESCONOCIDO = "desconocido"
 
 
@@ -77,7 +68,6 @@ class Oferta(Base):
 
     # SCORES
     score_backend: Mapped[Optional[int]] = mapped_column(Integer)
-    score_fullstack: Mapped[Optional[int]] = mapped_column(Integer)
     score_ia: Mapped[Optional[int]] = mapped_column(Integer)
     score_encaje: Mapped[Optional[int]] = mapped_column(Integer)
 

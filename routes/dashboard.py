@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from repositories import oferta_repository
@@ -23,4 +23,7 @@ def obtener_estadisticas(db: Session = Depends(get_db)):
 def actualizar_notas(
     id: str, notas: str = Body(embed=True), db: Session = Depends(get_db)
 ):
-    return oferta_repository.modificar_notas(db, id, notas)
+    oferta = oferta_repository.modificar_notas(db, id, notas)
+    if oferta is None:
+        raise HTTPException(status_code=404, detail="Oferta no encontrada")
+    return oferta

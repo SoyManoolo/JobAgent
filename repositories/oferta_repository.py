@@ -96,7 +96,10 @@ def modificar_datos_oferta(db: Session, id: str, datos: dict):
 
 
 def obtener_ofertas_estado(db: Session, estado: Estado, limite: Optional[int] = 10):
-    query = db.query(Oferta).filter(Oferta.estado == estado)
+    query = db.query(Oferta).filter(
+        Oferta.estado == estado,
+        Oferta.eliminado.is_(False),
+    )
     if limite:
         query = query.limit(limite)
     return query.all()
@@ -140,6 +143,23 @@ def devolver_ofertas(
     return ofertas, total
 
 
+def obtener_ofertas_para_extraer_preguntas(
+    db: Session,
+    limite: int = 10,
+):
+    return (
+        db.query(Oferta)
+        .filter(
+            Oferta.estado == Estado.ANALIZADA,
+            Oferta.aplicacion_sencilla.is_(True),
+            Oferta.preguntas_formulario.is_(None),
+            Oferta.eliminado.is_(False),
+        )
+        .limit(limite)
+        .all()
+    )
+
+
 def eliminar_oferta(db: Session, id: str):
     oferta = db.get(Oferta, id)
 
@@ -153,6 +173,10 @@ def eliminar_oferta(db: Session, id: str):
     db.refresh(oferta)
 
     return oferta
+
+
+def modificar_notas(db: Session, id: str, notas: str):
+    return modificar_datos_oferta(db, id, {"notas": notas})
 
 
 def obtener_stats(db: Session):

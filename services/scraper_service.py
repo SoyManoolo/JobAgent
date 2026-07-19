@@ -57,3 +57,30 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
             "preguntas": preguntas,
             "actualizada": resultado is not None,
         }
+
+
+def ejecutar_scraper_preguntas_pendientes(limite: int = 10):
+    with SessionLocal() as db:
+        ofertas = oferta_repository.obtener_ofertas_para_extraer_preguntas(
+            db,
+            limite=limite,
+        )
+
+    resultados = []
+
+    for oferta in ofertas:
+        try:
+            resultado = ejecutar_scraper_preguntas_linkedin(oferta.id)
+            resultados.append(resultado)
+        except Exception as error:
+            resultados.append(
+                {
+                    "oferta_id": oferta.id,
+                    "error": str(error),
+                }
+            )
+
+    return {
+        "total": len(ofertas),
+        "resultados": resultados,
+    }

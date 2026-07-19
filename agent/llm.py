@@ -2,14 +2,14 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-from agent.prompts import answer_question
 from agent.prompts.analyze_offer import build_analyze_prompt
-from agent.prompts.answer_question import ANSWER_QUESTION_PROMPT
+from agent.prompts.answer_question import build_answer_questions_prompt
 
 load_dotenv()
 
 URL_OLLAMA = os.getenv("OLLAMA_URL") or "http://localhost:11434/api/chat"
 MODEL = os.getenv("OLLAMA_MODEL")
+REQUEST_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "60"))
 
 PERFILES = {"backend", "ia", "desconocido"}
 IDIOMAS = {"es", "en", "otro"}
@@ -32,7 +32,7 @@ def analizar_oferta(descripcion: str) -> dict:
             "stream": False,
         }
         print("Enviando peticion a Ollama...")
-        response = requests.post(URL_OLLAMA, json=payload)
+        response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
 
         raw = response.json()
@@ -76,8 +76,8 @@ def analizar_oferta(descripcion: str) -> dict:
         raise
 
 
-def responder_preguntas(preguntas: str) -> dict:
-    prompt = ANSWER_QUESTION_PROMPT.format(pregunta=preguntas)
+def responder_preguntas(oferta: str, cv: str, preguntas: list[dict]) -> dict:
+    prompt = build_answer_questions_prompt(oferta, cv, preguntas)
     payload = {
         "model": MODEL,
         "messages": [
@@ -90,7 +90,7 @@ def responder_preguntas(preguntas: str) -> dict:
         "stream": False,
     }
 
-    response = requests.post(URL_OLLAMA, json=payload)
+    response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
 
     contenido = response.json()["message"]["content"]

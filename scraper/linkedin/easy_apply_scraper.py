@@ -106,6 +106,7 @@ def extraer_preguntas_paso(page) -> list[dict]:
             )
 
             pregunta = {
+                "pregunta_id": input_id or f"pregunta_{i}",
                 "texto": texto,
                 "tipo": tipo,
                 "obligatoria": (input_element.get_attribute("required") is not None),
@@ -143,6 +144,9 @@ def extraer_preguntas_paso(page) -> list[dict]:
                 )
 
             pregunta = {
+                "pregunta_id": (
+                    componente_radio.get_attribute("id") or f"pregunta_{i}"
+                ),
                 "texto": titulo.inner_text().strip(),
                 "tipo": "radio",
                 "obligatoria": (
@@ -194,6 +198,7 @@ def extraer_preguntas_paso(page) -> list[dict]:
             select_id = select_element.get_attribute("id")
 
             pregunta = {
+                "pregunta_id": select_id or f"pregunta_{i}",
                 "texto": label.inner_text().strip(),
                 "tipo": "select",
                 "obligatoria": (select_element.get_attribute("required") is not None),

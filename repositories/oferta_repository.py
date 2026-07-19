@@ -184,12 +184,10 @@ def obtener_stats(db: Session):
 
     total = query_base.count()
 
-    pendientes = query_base.filter(Oferta.estado == Estado.PENDIENTE_REVISION).count()
     aplicadas = query_base.filter(Oferta.estado == Estado.APLICADA).count()
     descartadas = query_base.filter(Oferta.estado == Estado.DESCARTADA).count()
     return {
         "total_ofertas": total,
         "aplicadas": aplicadas,
-        "pendientes": pendientes,
         "descartadas": descartadas,
     }

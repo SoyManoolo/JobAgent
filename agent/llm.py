@@ -12,7 +12,7 @@ MODEL = os.getenv("OLLAMA_MODEL")
 REQUEST_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "60"))
 
 PERFILES = {"backend", "ia", "desconocido"}
-IDIOMAS = {"es", "en", "otro"}
+IDIOMAS = {"es", "en", "ca", "otro"}
 SENIORITY = {"junior", "mid", "senior", "desconocido"}
 
 
@@ -76,7 +76,7 @@ def analizar_oferta(descripcion: str) -> dict:
         raise
 
 
-def responder_preguntas(oferta: str, cv: str, preguntas: list[dict]) -> dict:
+def responder_preguntas_oferta(oferta: str, cv: str, preguntas: list[dict]) -> dict:
     prompt = build_answer_questions_prompt(oferta, cv, preguntas)
     payload = {
         "model": MODEL,

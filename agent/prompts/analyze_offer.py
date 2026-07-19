@@ -16,7 +16,7 @@ El JSON debe tener exactamente esta estructura:
 
 {{
     "perfil_recomendado": "backend | ia | desconocido",
-    "idioma": "es | en | otro",
+    "idioma": "es | en | ca | otro",
     "seniority": "junior | mid | senior | desconocido",
     "score_backend": 0,
     "score_ia": 0,
@@ -29,6 +29,12 @@ Criterios de perfil:
 - backend: APIs, servicios, bases de datos, backend, Python, FastAPI, Java, Spring Boot, Node.js, Express, NestJS.
 - ia: IA aplicada, LLMs, automatización inteligente, ML, data science, NLP, RAG, agentes, Python para IA.
 - desconocido: oferta no tecnológica, genérica, sysadmin puro, soporte IT puro, candidatura espontánea o sin rol claro.
+
+Idiomas:
+- es: español.
+- en: inglés.
+- ca: catalán.
+- otro: cualquier idioma distinto de español, inglés o catalán.
 
 Reglas de scoring:
 - score_backend y score_ia miden afinidad técnica con cada perfil.

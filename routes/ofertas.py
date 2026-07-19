@@ -31,7 +31,7 @@ def obtener_oferta(id: str):
 
 
 @router.patch("/{id}", status_code=status.HTTP_200_OK)
-def modificar_respuestas(id: str, datos: dict):
+def modificar_datos_oferta(id: str, datos: dict):
     oferta = oferta_service.modificar_oferta(id, datos)
     if not oferta:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")

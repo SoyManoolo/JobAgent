@@ -32,12 +32,14 @@ Reglas:
 - No presentes experiencia académica o personal como experiencia profesional.
 - Para preguntas sobre tecnologías o tiempo de experiencia, prioriza la información de "Experiencia tecnológica".
 - Si falta información suficiente, responde de forma honesta y profesional.
-- Adapta cada respuesta al idioma de la pregunta.
+- Responde estrictamente en el mismo idioma que cada pregunta, aunque el CV esté en otro idioma.
 - Las respuestas deben ser naturales, directas y concisas.
-- Para preguntas de tipo `radio` o `select`, elige solo una de las opciones proporcionadas.
-- Para preguntas de tipo `radio` o `select`, copia exactamente el campo `valor` de la opción elegida en `valor_seleccionado`.
+- No deduzcas que el candidato posee un título, experiencia o disponibilidad si no aparece de forma explícita en el contexto.
+- No equipares un CFGS, un título de Técnico Superior o un curso de especialización con un Bachelor's Degree o grado universitario.
+- Para preguntas de tipo `radio` o `select`, elige una opción solo si el contexto permite justificarla.
+- Para preguntas de tipo `radio` o `select` con información suficiente, copia exactamente el campo `valor` de la opción elegida en `valor_seleccionado`.
 - Para preguntas de tipo `text` o `number`, `valor_seleccionado` debe ser `null`.
-- Si no hay información suficiente para elegir una opción, usa `valor_seleccionado: null` y marca `informacion_suficiente: false`.
+- Si no hay información suficiente, usa `respuesta: null`, `valor_seleccionado: null` y marca `informacion_suficiente: false`.
 - No menciones las fuentes de contexto utilizadas.
 - Conserva exactamente el identificador de cada pregunta.
 - Responde a todas las preguntas recibidas.
@@ -50,7 +52,7 @@ El JSON debe tener exactamente esta estructura:
     "respuestas": [
         {{
             "pregunta_id": "identificador original",
-            "respuesta": "respuesta generada",
+            "respuesta": "respuesta generada o null",
             "valor_seleccionado": "valor exacto de la opción elegida o null",
             "informacion_suficiente": true
         }}

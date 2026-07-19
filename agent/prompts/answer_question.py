@@ -34,6 +34,10 @@ Reglas:
 - Si falta información suficiente, responde de forma honesta y profesional.
 - Adapta cada respuesta al idioma de la pregunta.
 - Las respuestas deben ser naturales, directas y concisas.
+- Para preguntas de tipo `radio` o `select`, elige solo una de las opciones proporcionadas.
+- Para preguntas de tipo `radio` o `select`, copia exactamente el campo `valor` de la opción elegida en `valor_seleccionado`.
+- Para preguntas de tipo `text` o `number`, `valor_seleccionado` debe ser `null`.
+- Si no hay información suficiente para elegir una opción, usa `valor_seleccionado: null` y marca `informacion_suficiente: false`.
 - No menciones las fuentes de contexto utilizadas.
 - Conserva exactamente el identificador de cada pregunta.
 - Responde a todas las preguntas recibidas.
@@ -47,6 +51,7 @@ El JSON debe tener exactamente esta estructura:
         {{
             "pregunta_id": "identificador original",
             "respuesta": "respuesta generada",
+            "valor_seleccionado": "valor exacto de la opción elegida o null",
             "informacion_suficiente": true
         }}
     ]

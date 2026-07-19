@@ -1,4 +1,5 @@
 from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from scraper.browser import crear_navegador
 
@@ -33,7 +34,7 @@ def extraer_preguntas(link: str) -> list[dict]:
                 state="visible",
                 timeout=5_000,
             )
-        except TimeoutError as error:
+        except PlaywrightTimeoutError as error:
             raise SolicitudNoDisponibleError(
                 "La oferta ya no admite Solicitud Sencilla"
             ) from error
@@ -41,20 +42,15 @@ def extraer_preguntas(link: str) -> list[dict]:
         easy_apply.click()
 
         # Paso 1: datos de contacto
-        next_button = page.locator("button[data-easy-apply-next-button]").first
+        if not avanzar_paso_o_detectar_final(page):
+            return []
 
-        next_button.wait_for(
-            state="visible",
-            timeout=60_000,
-        )
-        next_button.click()
+        page.wait_for_timeout(500)
 
-        # Paso 2: selección de currículum
-        next_button.wait_for(
-            state="visible",
-            timeout=60_000,
-        )
-        next_button.click()
+        # Paso 2: selección de currículum. Algunas ofertas llegan desde aquí
+        # directamente a revisión/envío y no contienen preguntas adicionales.
+        if not avanzar_paso_o_detectar_final(page):
+            return []
 
         # Paso 3: preguntas adicionales
         page.wait_for_timeout(1_000)
@@ -71,6 +67,40 @@ def extraer_preguntas(link: str) -> list[dict]:
     finally:
         context.close()
         playwright.stop()
+
+
+def avanzar_paso_o_detectar_final(page) -> bool:
+    """Avanza un paso o indica que la solicitud ya está lista para revisar/enviar.
+
+    Nunca hace clic en los botones de revisión o envío.
+    """
+    next_button = page.locator("button[data-easy-apply-next-button]").first
+    final_button = page.locator(
+        "button[data-easy-apply-review-button], "
+        "button[data-easy-apply-submit-button], "
+        "button:has-text('Enviar solicitud'), "
+        "button:has-text('Submit application'), "
+        "button:has-text('Revisar'), "
+        "button:has-text('Review')"
+    ).first
+
+    if final_button.is_visible():
+        return False
+
+    try:
+        next_button.wait_for(
+            state="visible",
+            timeout=5_000,
+        )
+    except PlaywrightTimeoutError as error:
+        if final_button.is_visible():
+            return False
+        raise RuntimeError(
+            "No se encontró un botón para continuar la solicitud"
+        ) from error
+
+    next_button.click()
+    return True
 
 
 def extraer_preguntas_paso(page) -> list[dict]:

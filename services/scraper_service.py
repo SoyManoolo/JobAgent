@@ -1,10 +1,10 @@
-from operator import length_hint
 from scraper.linkedin.jobs_scraper import extraer_ofertas
 from scraper.linkedin.easy_apply_scraper import (
     extraer_preguntas,
     SolicitudNoDisponibleError,
 )
 from database import SessionLocal
+from models import Estado
 from repositories import oferta_repository
 
 
@@ -46,8 +46,19 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
                 "oferta_eliminada": bool(eliminada),
             }
 
+        estado_final = (
+            Estado.PENDIENTE_RESPUESTAS
+            if preguntas
+            else Estado.LISTA_PARA_APLICAR
+        )
+
         resultado = oferta_repository.modificar_datos_oferta(
-            db, id, {"preguntas_formulario": preguntas}
+            db,
+            id,
+            {
+                "preguntas_formulario": preguntas,
+                "estado": estado_final,
+            },
         )
 
         return {

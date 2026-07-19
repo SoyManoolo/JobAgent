@@ -10,7 +10,7 @@ class Estado(str, PyEnum):
     EXTRAIDA = "extraida"  # viene del scraping
     ANALIZADA = "analizada"  # ya tiene resultado de IA
 
-    PENDIENTE_REVISION = "pendiente_revision"  # tú la tienes que revisar
+    PENDIENTE_RESPUESTAS = "pendientes_respuestas"  # tiene preguntas pendientes de responder
     LISTA_PARA_APLICAR = "lista_para_aplicar"  # aprobada por ti
 
     APLICADA = "aplicada"
@@ -58,6 +58,7 @@ class Oferta(Base):
         Boolean, default=False, nullable=False
     )
     preguntas_formulario: Mapped[Optional[list[dict]]] = mapped_column(JSON)
+    respuestas_formulario: Mapped[Optional[list[dict]]] = mapped_column(JSON)
 
     # CLASIFICACIÓN IA
     perfil_recomendado: Mapped[Optional[PerfilRecomendado]] = mapped_column(

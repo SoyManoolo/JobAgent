@@ -52,11 +52,23 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
             else Estado.LISTA_PARA_APLICAR
         )
 
+        # Los selectores pertenecen a la sesión de Playwright que los generó.
+        # Se devuelven para diagnóstico, pero no se almacenan porque no son
+        # reutilizables en una sesión posterior.
+        preguntas_persistibles = [
+            {
+                clave: valor
+                for clave, valor in pregunta.items()
+                if clave != "selector_temporal"
+            }
+            for pregunta in preguntas
+        ]
+
         resultado = oferta_repository.modificar_datos_oferta(
             db,
             id,
             {
-                "preguntas_formulario": preguntas,
+                "preguntas_formulario": preguntas_persistibles,
                 "estado": estado_final,
             },
         )

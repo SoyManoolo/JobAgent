@@ -15,9 +15,8 @@ def extraer_preguntas_pendientes(limite: int = 10):
         limite
     )
 
-
-@router.post("/linkedin/easyapply/{id}", status_code=status.HTTP_200_OK)
-def extraer_preguntas_linkedin(id: str):
+@router.post("/linkedin/easyapply/procesar/{id}", status_code=status.HTTP_200_OK)
+def extraer_preguntas_oferta(id: str):
     return scraper_service.ejecutar_scraper_preguntas_linkedin(id)
 
 

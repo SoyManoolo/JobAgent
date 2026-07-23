@@ -76,9 +76,13 @@ Busca ofertas analizadas con Solicitud sencilla sin preguntas almacenadas y extr
 }
 ```
 
-### `POST /scraper/linkedin/easyapply/{id}`
+### `POST /scraper/linkedin/easyapply/procesar/{id}`
 
-Extrae las preguntas de Easy Apply de una oferta concreta. Si la solicitud ya no está disponible, la oferta se elimina lógicamente. Actualmente el proceso solo extrae preguntas: no rellena campos ni selecciona o sube el CV.
+Extrae y guarda las preguntas de Easy Apply de una única oferta identificada por su UUID. Si no hay preguntas adicionales, la oferta pasa a `lista_para_aplicar`; si las hay, pasa a `pendientes_respuestas`. Si la solicitud ya no está disponible, la oferta se elimina lógicamente.
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/v1/scraper/linkedin/easyapply/procesar/bf3877ce-cc2d-4c57-a1eb-05d4048899a5'
+```
 
 **Respuesta `200`**
 
@@ -86,22 +90,13 @@ Extrae las preguntas de Easy Apply de una oferta concreta. Si la solicitud ya no
 {
   "oferta_id": "bf3877ce-cc2d-4c57-a1eb-05d4048899a5",
   "disponible": true,
-  "total_preguntas": 1,
-  "preguntas": [
-    {
-      "pregunta_id": "input-123",
-      "texto": "¿Cuántos años de experiencia tienes?",
-      "tipo": "number",
-      "obligatoria": true,
-      "selector_temporal": "#input-123",
-      "opciones": []
-    }
-  ],
+  "total_preguntas": 0,
+  "preguntas": [],
   "actualizada": true
 }
 ```
 
-`pregunta_id` sí se genera durante la extracción y permite asociar cada respuesta a su campo. `selector_temporal` solo sirve durante la sesión de navegador en que se detectó: puede aparecer en la respuesta inmediata de extracción, pero no se persiste ni es reutilizable en sesiones posteriores.
+La respuesta incluye las preguntas detectadas. `selector_temporal`, si aparece, solo es válido durante la sesión de navegador que realizó la extracción y no se persiste.
 
 ### Portales aún no implementados
 
@@ -119,6 +114,34 @@ Analiza hasta 25 ofertas en estado `extraida` mediante Ollama. Actualiza cada un
 {"total":12,"procesadas":11,"errores":1}
 ```
 
+### `POST /agent/ofertas/procesar/{id}`
+
+Analiza una única oferta activa identificada por su UUID mediante Ollama. Guarda los datos de clasificación y actualiza su estado a `analizada` o `descartada` según el resultado. Si el análisis falla, la oferta queda en estado `error` y la API responde con un error `500`.
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-4c57-a1eb-05d4048899a5'
+```
+
+**Respuesta `200`**
+
+```json
+{
+  "id": "bf3877ce-cc2d-4c57-a1eb-05d4048899a5",
+  "estado": "analizada",
+  "perfil_recomendado": "backend",
+  "idioma_oferta": "es",
+  "seniority": "junior",
+  "score_backend": 85,
+  "score_ia": 25,
+  "score_encaje": 82,
+  "resumen": "Oferta de desarrollo backend con Python y FastAPI.",
+  "motivo_encaje": "Buen encaje por el stack y un nivel de experiencia accesible."
+}
+```
+
+- `404`: `{"detail":"Oferta no encontrada"}`. También se devuelve para ofertas eliminadas lógicamente.
+- `500`: no se pudo completar el análisis; la oferta queda marcada como `error`.
+
 ### `POST /agent/ofertas/responder`
 
 Genera respuestas para hasta 25 ofertas en `pendientes_respuestas`. Una oferta pasa a `lista_para_aplicar` si todas sus preguntas obligatorias tienen respuesta suficiente.
@@ -129,7 +152,7 @@ Genera respuestas para hasta 25 ofertas en `pendientes_respuestas`. Una oferta p
 {"total":3,"procesadas":3,"errores":0}
 ```
 
-### `POST /agent/ofertas/{id}/responder`
+### `POST /agent/ofertas/responder/{id}`
 
 Genera y guarda las respuestas de una única oferta.
 

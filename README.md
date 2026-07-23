@@ -18,7 +18,7 @@ La interfaz visual se desarrolla en un repositorio independiente y consume los e
 - Descarta automáticamente ofertas fuera de idioma, sin perfil reconocido o con un encaje inferior a 20.
 - Extrae las preguntas de LinkedIn Easy Apply y genera respuestas propuestas basadas en el CV.
 - Valida que las preguntas obligatorias estén resueltas antes de marcar una oferta como lista para aplicar.
-- Expone filtros, paginación, notas y métricas para un dashboard.
+- Expone filtros, paginación, notas y métricas para un dashboard: embudo por estado, prioridades, encaje, Easy Apply, perfiles y plataformas.
 
 ## Arquitectura
 

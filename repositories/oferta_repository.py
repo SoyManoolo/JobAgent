@@ -177,17 +177,3 @@ def eliminar_oferta(db: Session, id: str):
 
 def modificar_notas(db: Session, id: str, notas: str):
     return modificar_datos_oferta(db, id, {"notas": notas})
-
-
-def obtener_stats(db: Session):
-    query_base = db.query(Oferta).filter(Oferta.eliminado == False)
-
-    total = query_base.count()
-
-    aplicadas = query_base.filter(Oferta.estado == Estado.APLICADA).count()
-    descartadas = query_base.filter(Oferta.estado == Estado.DESCARTADA).count()
-    return {
-        "total_ofertas": total,
-        "aplicadas": aplicadas,
-        "descartadas": descartadas,
-    }

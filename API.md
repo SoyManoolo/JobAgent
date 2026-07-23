@@ -251,13 +251,50 @@ Marca una oferta como eliminada; no borra físicamente su registro.
 
 ### `GET /dashboard/stats`
 
-Devuelve contadores de ofertas activas.
+Devuelve métricas de las ofertas no eliminadas: embudo por estado, trabajo pendiente, puntuaciones de encaje, Easy Apply, perfil recomendado, plataforma y tasa de aplicación.
 
 **Respuesta `200`**
 
 ```json
-{"total_ofertas":42,"aplicadas":5,"descartadas":12}
+{
+  "total_ofertas": 42,
+  "aplicadas": 5,
+  "descartadas": 12,
+  "por_estado": {
+    "extraida": 4,
+    "analizada": 10,
+    "pendientes_respuestas": 3,
+    "lista_para_aplicar": 8,
+    "aplicada": 5,
+    "descartada": 12,
+    "error": 0
+  },
+  "pendientes": {
+    "analisis": 4,
+    "respuestas": 3,
+    "listas_para_aplicar": 8
+  },
+  "ofertas_prioritarias": {"score_minimo": 70, "total": 9},
+  "score_encaje": {
+    "ofertas_evaluadas": 30,
+    "medio": 57.4,
+    "minimo": 8,
+    "maximo": 94,
+    "por_rango": {"0_19": 6, "20_39": 5, "40_59": 7, "60_79": 6, "80_100": 6}
+  },
+  "easy_apply": {
+    "total": 20,
+    "pendientes_preguntas": 4,
+    "pendientes_respuestas": 3,
+    "listas_para_aplicar": 5
+  },
+  "por_perfil": {"backend": 18, "ia": 8, "desconocido": 4, "sin_clasificar": 12},
+  "por_plataforma": {"linkedin": 42},
+  "tasa_aplicacion": 11.9
+}
 ```
+
+`ofertas_prioritarias` contabiliza ofertas con encaje de 70 o más que están analizadas, pendientes de respuesta o listas para aplicar. `tasa_aplicacion` es el porcentaje de ofertas aplicadas respecto al total activo.
 
 ### `PATCH /dashboard/ofertas/{id}/notas`
 

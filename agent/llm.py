@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from agent.prompts.analyze_offer import build_analyze_prompt
 from agent.prompts.answer_question import build_answer_questions_prompt
+from services.retry import ejecutar_con_reintentos
 
 load_dotenv()
 
@@ -17,66 +18,78 @@ SENIORITY = {"junior", "mid", "senior", "desconocido"}
 
 
 def analizar_oferta(descripcion: str) -> dict:
-    try:
-        prompt = build_analyze_prompt(descripcion)
+    return ejecutar_con_reintentos(
+        lambda: _analizar_oferta(descripcion),
+        "el análisis de la oferta con Ollama",
+    )
 
-        payload = {
-            "model": MODEL,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            "format": "json",
-            "stream": False,
-        }
-        print("Enviando peticion a Ollama...")
-        response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
-        response.raise_for_status()
 
-        raw = response.json()
+def _analizar_oferta(descripcion: str) -> dict:
+    prompt = build_analyze_prompt(descripcion)
 
-        contenido = raw["message"]["content"]
-        print("Contenido: ", contenido)
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        "format": "json",
+        "stream": False,
+    }
+    print("Enviando peticion a Ollama...")
+    response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
 
-        resultado = json.loads(contenido)
+    raw = response.json()
 
-        resultado["perfil_recomendado"] = resultado["perfil_recomendado"].lower()
-        resultado["idioma"] = resultado["idioma"].lower()
-        resultado["seniority"] = resultado["seniority"].lower()
+    contenido = raw["message"]["content"]
+    print("Contenido: ", contenido)
 
-        if resultado["perfil_recomendado"] not in PERFILES:
-            resultado["perfil_recomendado"] = "desconocido"
+    resultado = json.loads(contenido)
 
-        if resultado["idioma"] not in IDIOMAS:
-            resultado["idioma"] = "otro"
+    resultado["perfil_recomendado"] = resultado["perfil_recomendado"].lower()
+    resultado["idioma"] = resultado["idioma"].lower()
+    resultado["seniority"] = resultado["seniority"].lower()
 
-        if resultado["seniority"] not in SENIORITY:
-            resultado["seniority"] = "desconocido"
+    if resultado["perfil_recomendado"] not in PERFILES:
+        resultado["perfil_recomendado"] = "desconocido"
 
-        campos = [
-            "perfil_recomendado",
-            "idioma",
-            "seniority",
-            "score_backend",
-            "score_ia",
-            "score_encaje",
-            "resumen",
-            "motivo_encaje",
-        ]
+    if resultado["idioma"] not in IDIOMAS:
+        resultado["idioma"] = "otro"
 
-        for campo in campos:
-            if campo not in resultado:
-                raise ValueError(f"Falta el campo '{campo}'")
+    if resultado["seniority"] not in SENIORITY:
+        resultado["seniority"] = "desconocido"
 
-        return resultado
-    except Exception as e:
-        print(e)
-        raise
+    campos = [
+        "perfil_recomendado",
+        "idioma",
+        "seniority",
+        "score_backend",
+        "score_ia",
+        "score_encaje",
+        "resumen",
+        "motivo_encaje",
+    ]
+
+    for campo in campos:
+        if campo not in resultado:
+            raise ValueError(f"Falta el campo '{campo}'")
+
+    return resultado
 
 
 def responder_preguntas_oferta(oferta: str, cv: str, preguntas: list[dict]) -> dict:
+    return ejecutar_con_reintentos(
+        lambda: _responder_preguntas_oferta(oferta, cv, preguntas),
+        "la generación de respuestas con Ollama",
+    )
+
+
+def _responder_preguntas_oferta(
+    oferta: str, cv: str, preguntas: list[dict]
+) -> dict:
     prompt = build_answer_questions_prompt(oferta, cv, preguntas)
     payload = {
         "model": MODEL,

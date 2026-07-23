@@ -6,11 +6,15 @@ from scraper.linkedin.easy_apply_scraper import (
 from database import SessionLocal
 from models import Estado
 from repositories import oferta_repository
+from services.retry import ejecutar_con_reintentos
 
 
 def ejecutar_scraper_linkedin(busqueda: str):
     try:
-        ofertas = extraer_ofertas(busqueda)
+        ofertas = ejecutar_con_reintentos(
+            lambda: extraer_ofertas(busqueda),
+            "el scraper de ofertas de LinkedIn",
+        )
 
         with SessionLocal() as db:
             resultado = oferta_repository.guardar_ofertas(db, ofertas)
@@ -35,7 +39,11 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
             raise ValueError("La oferta no tiene solicitud sencilla")
 
         try:
-            preguntas = extraer_preguntas(oferta.url)
+            preguntas = ejecutar_con_reintentos(
+                lambda: extraer_preguntas(oferta.url),
+                "el scraper de preguntas de Easy Apply",
+                no_reintentar=(SolicitudNoDisponibleError,),
+            )
 
         except SolicitudNoDisponibleError:
             eliminada = oferta_repository.eliminar_oferta(db, id)

@@ -12,6 +12,7 @@ La especificación interactiva generada por FastAPI está disponible en `http://
 - Los enums válidos son:
   - `estado`: `extraida`, `analizada`, `pendientes_respuestas`, `lista_para_aplicar`, `aplicada`, `descartada`, `error`.
   - `perfil`: `backend`, `ia`, `desconocido`.
+- Las llamadas a Ollama y las ejecuciones del scraper se reintentan hasta tres veces ante errores transitorios. Se puede configurar mediante `RETRY_ATTEMPTS` y el tiempo de espera incremental mediante `RETRY_DELAY_SECONDS` (en segundos).
 
 ## Estado del servicio
 

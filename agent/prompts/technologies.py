@@ -10,7 +10,7 @@ TECHNOLOGIES = {
     "Python": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": [
             "Desarrollo de APIs con FastAPI",
             "Automatización de procesos",
@@ -23,7 +23,7 @@ TECHNOLOGIES = {
     "TypeScript": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "2–3 años",
         "usos": [
             "Desarrollo backend con Express.js",
             "Desarrollo frontend con React y Remix",
@@ -35,7 +35,7 @@ TECHNOLOGIES = {
     "JavaScript": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "2–3 años",
         "usos": [
             "Desarrollo web",
             "Frontend con React",
@@ -46,7 +46,7 @@ TECHNOLOGIES = {
     "Java": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "2 años",
         "usos": [
             "Desarrollo backend",
             "Spring Boot",
@@ -57,7 +57,7 @@ TECHNOLOGIES = {
     "FastAPI": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": [
             "APIs REST",
             "Lógica de negocio",
@@ -69,7 +69,7 @@ TECHNOLOGIES = {
     "Express.js": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": [
             "Diseño y desarrollo completo de backends",
             "APIs REST",
@@ -82,14 +82,14 @@ TECHNOLOGIES = {
     "Spring Boot": {
         "nivel": "básico-intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": ["Desarrollo de APIs y servicios backend durante la formación"],
         "proyectos": [],
     },
     "SQL": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "2–3 años",
         "tecnologias": ["PostgreSQL", "MySQL", "SQLite"],
         "usos": [
             "Modelado relacional",
@@ -102,14 +102,14 @@ TECHNOLOGIES = {
     "MongoDB": {
         "nivel": "básico-intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": ["Persistencia documental durante la formación"],
         "proyectos": [],
     },
     "Pinecone": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Base de datos vectorial",
             "Namespaces por usuario",
@@ -121,7 +121,7 @@ TECHNOLOGIES = {
     "Docker": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Contenedorización de servicios",
             "Despliegue local",
@@ -132,7 +132,7 @@ TECHNOLOGIES = {
     "n8n": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Orquestación de flujos automatizados",
             "Ejecución programada mediante cron",
@@ -143,7 +143,7 @@ TECHNOLOGIES = {
     "Playwright": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Scraping de ofertas",
             "Extracción de formularios",
@@ -154,7 +154,7 @@ TECHNOLOGIES = {
     "Ollama": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": [
             "Ejecución local de LLMs y VLMs",
             "Análisis semántico",
@@ -166,7 +166,7 @@ TECHNOLOGIES = {
     "PydanticAI": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Desarrollo de agentes",
             "Definición de salidas estructuradas",
@@ -177,7 +177,7 @@ TECHNOLOGIES = {
     "PyTorch": {
         "nivel": "básico-intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": [
             "Formación en Machine Learning y Deep Learning",
             "Uso de modelos y tensores",
@@ -187,7 +187,7 @@ TECHNOLOGIES = {
     "Scikit-Learn": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "1 año",
         "usos": [
             "Modelos clásicos de Machine Learning",
             "Preprocesamiento y evaluación",
@@ -197,7 +197,7 @@ TECHNOLOGIES = {
     "Socket.IO": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Chat en tiempo real",
             "Comentarios en tiempo real",
@@ -209,7 +209,7 @@ TECHNOLOGIES = {
     "WebRTC": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "< 1 año",
         "usos": [
             "Videollamadas P2P",
             "Señalización mediante Socket.IO",
@@ -221,7 +221,7 @@ TECHNOLOGIES = {
     "Git": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "3 años",
         "usos": [
             "Control de versiones",
             "Trabajo colaborativo",
@@ -232,7 +232,7 @@ TECHNOLOGIES = {
     "Linux": {
         "nivel": "intermedio",
         "inicio_aproximado": None,
-        "experiencia_aproximada": None,
+        "experiencia_aproximada": "3 años",
         "usos": [
             "Administración de servidores locales",
             "Despliegue de servicios",

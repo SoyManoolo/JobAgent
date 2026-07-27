@@ -1,12 +1,28 @@
+from datetime import datetime
+
+from agent.prompts.cv import obtener_nombre_cv_linkedin
 from scraper.linkedin.jobs_scraper import extraer_ofertas
 from scraper.linkedin.easy_apply_scraper import (
     extraer_preguntas,
     SolicitudNoDisponibleError,
 )
+from scraper.linkedin.apply import enviar_solicitud
 from database import SessionLocal
 from models import Estado
 from repositories import oferta_repository
 from services.retry import ejecutar_con_reintentos
+
+
+class OfertaNoEncontradaError(ValueError):
+    pass
+
+
+class OfertaNoListaParaAplicarError(ValueError):
+    pass
+
+
+class CvLinkedInNoConfiguradoError(ValueError):
+    pass
 
 
 def ejecutar_scraper_linkedin(busqueda: str):
@@ -115,3 +131,83 @@ def ejecutar_scraper_preguntas_pendientes(limite: int = 10):
         "total": len(ofertas),
         "resultados": resultados,
     }
+
+
+def ejecutar_aplicacion_easy_apply(id: str):
+    """Envía una oferta que ya ha sido revisada y está lista para aplicar."""
+    with SessionLocal() as db:
+        oferta = oferta_repository.obtener_oferta_id(db, id)
+
+        if oferta is None or oferta.eliminado:
+            raise OfertaNoEncontradaError("Oferta no encontrada")
+
+        if not oferta.aplicacion_sencilla or oferta.plataforma.lower() != "linkedin":
+            raise OfertaNoListaParaAplicarError(
+                "La oferta no admite Easy Apply de LinkedIn"
+            )
+
+        if oferta.estado != Estado.LISTA_PARA_APLICAR:
+            raise OfertaNoListaParaAplicarError(
+                "La oferta debe estar en estado lista_para_aplicar"
+            )
+
+        preguntas = oferta.preguntas_formulario or []
+        respuestas = oferta.respuestas_formulario or []
+        _validar_respuestas_para_envio(preguntas, respuestas)
+
+        try:
+            nombre_cv = obtener_nombre_cv_linkedin(
+                oferta.perfil_recomendado.value,
+                oferta.idioma_oferta,
+            )
+        except (AttributeError, ValueError) as error:
+            raise CvLinkedInNoConfiguradoError(
+                "No hay un CV de LinkedIn configurado para el perfil e idioma "
+                "de esta oferta"
+            ) from error
+
+        resultado = enviar_solicitud(oferta.url, preguntas, respuestas, nombre_cv)
+
+        oferta_repository.modificar_datos_oferta(
+            db,
+            id,
+            {
+                "estado": Estado.APLICADA,
+                "fecha_aplicacion": datetime.now(),
+            },
+        )
+
+        return {
+            "oferta_id": id,
+            **resultado,
+            "estado": Estado.APLICADA.value,
+        }
+
+
+def _validar_respuestas_para_envio(
+    preguntas: list[dict],
+    respuestas: list[dict],
+) -> None:
+    respuestas_por_id = {
+        respuesta.get("pregunta_id"): respuesta for respuesta in respuestas
+    }
+
+    for pregunta in preguntas:
+        if not pregunta.get("obligatoria"):
+            continue
+
+        respuesta = respuestas_por_id.get(pregunta["pregunta_id"])
+        if respuesta is None or not respuesta.get("informacion_suficiente"):
+            raise OfertaNoListaParaAplicarError(
+                "Hay preguntas obligatorias sin una respuesta revisada"
+            )
+
+        if pregunta["tipo"] in {"radio", "select"}:
+            if respuesta.get("valor_seleccionado") is None:
+                raise OfertaNoListaParaAplicarError(
+                    "Hay preguntas de selección sin un valor revisado"
+                )
+        elif not respuesta.get("respuesta"):
+            raise OfertaNoListaParaAplicarError(
+                "Hay preguntas de texto sin una respuesta revisada"
+            )

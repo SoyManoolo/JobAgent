@@ -1,6 +1,7 @@
 import json
 
 from .technologies import TECHNOLOGIES
+from .application_preferences import APPLICATION_PREFERENCES
 
 
 def build_answer_questions_prompt(
@@ -31,7 +32,9 @@ Reglas:
 - Diferencia entre experiencia profesional, académica y en proyectos personales.
 - No presentes experiencia académica o personal como experiencia profesional.
 - Para preguntas sobre tecnologías o tiempo de experiencia, prioriza la información de "Experiencia tecnológica".
-- Si falta información suficiente, responde de forma honesta y profesional.
+- Usa "Preferencias de candidatura" para preguntas de disponibilidad, ubicación, modalidad, salario, autorización laboral, formación, idiomas y condiciones de trabajo.
+- Para preguntas de tipo `number` sobre años de experiencia con una tecnología que no aparezca en el contexto, responde `0` y marca `informacion_suficiente: true`.
+- Para cualquier otro caso en que falte información suficiente, responde de forma honesta y profesional.
 - Responde estrictamente en el mismo idioma que cada pregunta, aunque el CV esté en otro idioma.
 - Las respuestas deben ser naturales, directas y concisas.
 - No deduzcas que el candidato posee un título, experiencia o disponibilidad si no aparece de forma explícita en el contexto.
@@ -72,6 +75,11 @@ CV:
 Experiencia tecnológica:
 --------------------
 {technologies_json}
+--------------------
+
+Preferencias de candidatura:
+--------------------
+{APPLICATION_PREFERENCES}
 --------------------
 
 Preguntas:

@@ -155,7 +155,7 @@ def responder_preguntas_oferta(id: str):
                 oferta.idioma_oferta,
             )
             respuestas = llm.responder_preguntas_oferta(oferta.descripcion, cv, preguntas=oferta.preguntas_formulario)
-            lista_para_aplicar = validar_respuestas_formulario(
+            validar_respuestas_formulario(
                 oferta.preguntas_formulario,
                 respuestas,
             )
@@ -165,11 +165,7 @@ def responder_preguntas_oferta(id: str):
                 oferta.id,
                 {
                     "respuestas_formulario": respuestas["respuestas"],
-                    "estado": (
-                        Estado.LISTA_PARA_APLICAR
-                        if lista_para_aplicar
-                        else Estado.PENDIENTE_RESPUESTAS
-                    ),
+                    "estado": Estado.PENDIENTE_RESPUESTAS,
                 },
             )
             return {"respuestas": respuestas}
@@ -178,10 +174,10 @@ def responder_preguntas_oferta(id: str):
             return {"error": "Error al procesar la solicitud"}
 
 
-def responder_preguntas_ofertas():
+def responder_preguntas_ofertas(limite: int = 5):
     with SessionLocal() as db:
         ofertas = oferta_repository.obtener_ofertas_estado(
-            db, estado=Estado.PENDIENTE_RESPUESTAS, limite=25
+            db, estado=Estado.PENDIENTE_RESPUESTAS, limite=limite
         )
 
         total = len(ofertas)
@@ -196,7 +192,7 @@ def responder_preguntas_ofertas():
                 )
 
                 respuestas = llm.responder_preguntas_oferta(oferta.descripcion, cv, preguntas=oferta.preguntas_formulario)
-                lista_para_aplicar = validar_respuestas_formulario(
+                validar_respuestas_formulario(
                     oferta.preguntas_formulario,
                     respuestas,
                 )
@@ -208,11 +204,7 @@ def responder_preguntas_ofertas():
                 oferta.id,
                     {
                         "respuestas_formulario": respuestas["respuestas"],
-                        "estado": (
-                            Estado.LISTA_PARA_APLICAR
-                            if lista_para_aplicar
-                            else Estado.PENDIENTE_RESPUESTAS
-                        ),
+                        "estado": Estado.PENDIENTE_RESPUESTAS,
                     },
                 )
             except Exception as e:

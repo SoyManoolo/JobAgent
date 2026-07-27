@@ -24,6 +24,15 @@ Intereses profesionales:
 - Sistemas distribuidos.
 - Self-hosting.
 
+Preferencias de ubicación:
+
+- Reside en Barcelona.
+- En Barcelona acepta puestos remotos, híbridos o presenciales, con preferencia
+  por remoto.
+- Fuera de Barcelona solo acepta puestos remotos.
+- Si una oferta exige relocalización fuera de Barcelona, debe descartarse
+  automáticamente con `score_encaje` 0.
+
 Instrucciones para la evaluación:
 
 - Evalúa la oferta únicamente teniendo en cuenta este perfil.

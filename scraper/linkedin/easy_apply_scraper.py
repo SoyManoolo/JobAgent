@@ -8,6 +8,26 @@ class SolicitudNoDisponibleError(Exception):
     pass
 
 
+EASY_APPLY_SELECTOR = (
+    'a[aria-label="Solicitud sencilla"], '
+    'a[href*="openSDUIApplyFlow=true"]'
+)
+
+
+def abrir_easy_apply(page) -> None:
+    """Abre el modal de Easy Apply usando el selector común de LinkedIn."""
+    easy_apply = page.locator(EASY_APPLY_SELECTOR).first
+
+    try:
+        easy_apply.wait_for(state="visible", timeout=5_000)
+    except PlaywrightTimeoutError as error:
+        raise SolicitudNoDisponibleError(
+            "La oferta ya no admite Solicitud Sencilla"
+        ) from error
+
+    easy_apply.click()
+
+
 def extraer_preguntas(link: str) -> list[dict]:
     playwright, _, context, page = crear_navegador(
         persistent=True,
@@ -25,21 +45,7 @@ def extraer_preguntas(link: str) -> list[dict]:
                 f"LinkedIn rechazó la navegación a '{link}': {error}"
             ) from error
 
-        easy_apply = page.locator(
-            'a[aria-label="Solicitud sencilla"], a[href*="openSDUIApplyFlow=true"]'
-        ).first
-
-        try:
-            easy_apply.wait_for(
-                state="visible",
-                timeout=5_000,
-            )
-        except PlaywrightTimeoutError as error:
-            raise SolicitudNoDisponibleError(
-                "La oferta ya no admite Solicitud Sencilla"
-            ) from error
-
-        easy_apply.click()
+        abrir_easy_apply(page)
 
         # Paso 1: datos de contacto
         if not avanzar_paso_o_detectar_final(page):

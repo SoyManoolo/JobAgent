@@ -100,15 +100,15 @@ El catálogo resumido de endpoints y ejemplos está en [API.md](API.md).
 1. Se extraen ofertas de LinkedIn y se guardan como `extraida`.
 2. El agente las analiza con Ollama y las marca como `analizada` o `descartada`.
 3. Para las ofertas analizadas con Solicitud sencilla, se extraen las preguntas; quedan `pendientes_respuestas` o `lista_para_aplicar` si no hay preguntas.
-4. El agente prepara las respuestas usando el CV adecuado y solo marca `lista_para_aplicar` cuando las obligatorias están resueltas.
-5. La persona revisa la oferta, las respuestas y las notas antes de realizar cualquier envío manual. Actualmente JobAgent no rellena formularios ni sube CV automáticamente: ambas capacidades están en desarrollo.
+4. El agente prepara las respuestas usando el CV adecuado; la persona las revisa y confirma la oferta para dejarla en `lista_para_aplicar`.
+5. La persona inicia el envío manualmente desde el dashboard o API. Playwright completa Easy Apply, elige el CV privado configurado y sólo marca la oferta como `aplicada` si LinkedIn confirma el envío.
 
 ## Roadmap
 
 - [ ] Integrar y documentar el repositorio independiente de JobAgent Dashboard.
-- [ ] Rellenar automáticamente formularios Easy Apply.
-- [ ] Seleccionar o subir el CV correspondiente.
-- [ ] Detener el flujo antes del envío final para revisión manual.
+- [x] Rellenar automáticamente formularios Easy Apply revisados.
+- [x] Seleccionar el CV correspondiente ya subido a LinkedIn.
+- [ ] Subir un CV cuando no esté disponible en LinkedIn.
 - [ ] Incluir flujos n8n exportables para programar extracción y análisis.
 - [ ] Implementar los extractores de InfoJobs, Indeed y Glassdoor, cuyos endpoints son actualmente placeholders.
 - [ ] Añadir tests automatizados, autenticación y control de acceso.

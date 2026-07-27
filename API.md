@@ -99,6 +99,37 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/scraper/linkedin/easyapply/procesar/b
 
 La respuesta incluye las preguntas detectadas. `selector_temporal`, si aparece, solo es válido durante la sesión de navegador que realizó la extracción y no se persiste.
 
+### `POST /scraper/linkedin/easyapply/aplicar/{id}`
+
+Rellena y envía mediante Playwright una solicitud de LinkedIn Easy Apply que ya ha sido revisada. La oferta debe estar en estado `lista_para_aplicar`, pertenecer a LinkedIn y tener respuestas suficientes para todas sus preguntas obligatorias.
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/v1/scraper/linkedin/easyapply/aplicar/bf3877ce-cc2d-4c57-a1eb-05d4048899a5'
+```
+
+**Respuesta `200`**
+
+```json
+{
+  "oferta_id": "bf3877ce-cc2d-4c57-a1eb-05d4048899a5",
+  "enviada": true,
+  "ya_enviada": false,
+  "campos_rellenados": 3,
+  "cv_seleccionado": "CV_EN_BACKEND.pdf",
+  "estado": "aplicada"
+}
+```
+
+Tras detectar la confirmación de LinkedIn, guarda el estado `aplicada` y `fecha_aplicacion`. Si LinkedIn ya muestra la solicitud como enviada, sincroniza igualmente el estado local.
+
+- `404`: la oferta no existe o está eliminada.
+- `409`: la oferta no es de LinkedIn Easy Apply, no está lista para aplicar o tiene respuestas obligatorias incompletas.
+- `500`: el formulario cambió, LinkedIn rechazó algún campo o no se pudo confirmar el envío.
+
+Este endpoint realiza el envío real de la candidatura. No aplica reintentos automáticos sobre la operación completa para evitar solicitudes duplicadas después de un resultado ambiguo.
+
+Rellena campos `text`, `number`, `radio` y `select`, y selecciona explícitamente el CV configurado para el `perfil_recomendado` e `idioma_oferta`. Los nombres de los documentos de LinkedIn se definen de forma privada en `agent/prompts/cv.py`, mediante `CVS_LINKEDIN`; consulta `cv.example.py` como plantilla. Si no hay una configuración correspondiente, devuelve `409` y no envía la solicitud. La subida de CV y otros tipos de campo quedan pendientes de incorporar.
+
 ### Portales aún no implementados
 
 `POST /scraper/infojobs`, `POST /scraper/indeed` y `POST /scraper/glassdoor` son placeholders no funcionales; actualmente devuelven una cadena vacía y no extraen ofertas.
@@ -153,7 +184,15 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-
 
 ### `POST /agent/ofertas/responder`
 
-Genera respuestas para hasta 25 ofertas en `pendientes_respuestas`. Una oferta pasa a `lista_para_aplicar` si todas sus preguntas obligatorias tienen respuesta suficiente.
+Genera respuestas para hasta el número indicado de ofertas en `pendientes_respuestas`. Las respuestas quedan pendientes de revisión manual; solo la confirmación explícita las pasa a `lista_para_aplicar`.
+
+| Query parameter | Tipo | Predeterminado | Descripción |
+| --- | --- | --- | --- |
+| `limite` | integer | `5` | Número máximo de ofertas para las que se generarán respuestas. Admite valores entre `1` y `100`. |
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/responder?limite=5'
+```
 
 **Respuesta `200`**
 
@@ -234,6 +273,35 @@ Obtiene una oferta por UUID.
 
 - `200`: objeto de oferta.
 - `404`: `{"detail":"Oferta no encontrada"}`.
+
+### `PATCH /ofertas/{id}/respuestas/{pregunta_id}`
+
+Edita una sola respuesta de formulario. El dashboard puede usar este endpoint tanto para corregir una propuesta del LLM como para responder una pregunta directamente. No hay que enviar el JSON completo de respuestas.
+
+Para preguntas `text` o `number`, envía `respuesta`:
+
+```json
+{"respuesta":"25000"}
+```
+
+Para preguntas `radio` o `select`, envía el valor de una opción permitida; la API guarda automáticamente el texto asociado:
+
+```json
+{"valor_seleccionado":"Yes"}
+```
+
+La respuesta incluye `todas_obligatorias_resueltas`, útil para que el dashboard habilite el botón de confirmación.
+
+- `404`: oferta inexistente o eliminada.
+- `422`: pregunta inexistente, campo incorrecto u opción no válida.
+
+### `POST /ofertas/{id}/respuestas/confirmar`
+
+Confirma las respuestas revisadas. Comprueba todas las preguntas obligatorias y cambia el estado a `lista_para_aplicar`.
+
+- `200`: oferta confirmada.
+- `404`: oferta inexistente o eliminada.
+- `409`: la oferta no está pendiente de respuestas o queda alguna respuesta obligatoria inválida.
 
 ### `PATCH /ofertas/{id}`
 

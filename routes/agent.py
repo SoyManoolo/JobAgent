@@ -19,8 +19,8 @@ def procesar_oferta(id: str):
 
 
 @router.post("/ofertas/responder")
-def responder_preguntas_ofertas():
-    return agent_service.responder_preguntas_ofertas()
+def responder_preguntas_ofertas(limite: int = Query(default=5, ge=1, le=100)):
+    return agent_service.responder_preguntas_ofertas(limite=limite)
 
 
 @router.post("/ofertas/responder/{id}")

@@ -119,10 +119,10 @@ def procesar_oferta(id: str):
             raise
 
 
-def procesar_ofertas_extraidas():
+def procesar_ofertas_extraidas(limite: int = 25):
     with SessionLocal() as db:
         ofertas = oferta_repository.obtener_ofertas_estado(
-            db, estado=Estado.EXTRAIDA, limite=25
+            db, estado=Estado.EXTRAIDA, limite=limite
         )
 
         total = len(ofertas)

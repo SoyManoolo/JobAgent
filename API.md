@@ -107,7 +107,15 @@ La respuesta incluye las preguntas detectadas. `selector_temporal`, si aparece, 
 
 ### `POST /agent/ofertas/procesar`
 
-Analiza hasta 25 ofertas en estado `extraida` mediante Ollama. Actualiza cada una a `analizada`, `descartada` o `error`.
+Analiza hasta el número indicado de ofertas en estado `extraida` mediante Ollama. Actualiza cada una a `analizada`, `descartada` o `error`. Si hay menos ofertas disponibles que el límite solicitado, procesa únicamente las disponibles sin devolver error.
+
+| Query parameter | Tipo | Predeterminado | Descripción |
+| --- | --- | --- | --- |
+| `limite` | integer | `25` | Número máximo de ofertas que se analizarán. |
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar?limite=50'
+```
 
 **Respuesta `200`**
 

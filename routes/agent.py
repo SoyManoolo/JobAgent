@@ -1,12 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from services import agent_service
 
 router = APIRouter(prefix="/agent", tags=["Agente"])
 
 
 @router.post("/ofertas/procesar")
-def procesar_ofertas():
-    return agent_service.procesar_ofertas_extraidas()
+def procesar_ofertas(limite: int = Query(default=25, ge=1, le=100)):
+    return agent_service.procesar_ofertas_extraidas(limite=limite)
 
 
 @router.post("/ofertas/procesar/{id}")

@@ -155,7 +155,6 @@ def _seleccionar_cv_linkedin(page, nombre_cv: str) -> bool:
                 f"LinkedIn no confirmó la selección del CV '{nombre_cv}'"
             )
 
-        print(f"CV seleccionado explícitamente: {nombre_cv}", flush=True)
         return True
 
     raise FormularioEasyApplyError(
@@ -237,11 +236,6 @@ def _rellenar_preguntas_visibles(
 ) -> int:
     rellenadas = 0
     elementos = page.locator("[data-test-form-element]")
-    print(
-        f"Contenedores de formulario detectados: {elementos.count()}",
-        flush=True,
-    )
-    _registrar_campos_visibles(page)
 
     for indice in range(elementos.count()):
         elemento = elementos.nth(indice)
@@ -259,9 +253,6 @@ def _rellenar_preguntas_visibles(
                 respuestas_por_id,
                 preguntas_por_texto,
             )
-            _registrar_asociacion_campo(
-                "texto", identificador, etiqueta, pregunta_id
-            )
             if pregunta_id is None:
                 continue
 
@@ -271,10 +262,6 @@ def _rellenar_preguntas_visibles(
                 campo.fill(str(valor))
                 preguntas_utilizadas.add(pregunta_id)
                 rellenadas += 1
-                print(
-                    f"Campo rellenado: pregunta_id={pregunta_id}",
-                    flush=True,
-                )
             continue
 
         componente_radio = elemento.locator(
@@ -290,9 +277,6 @@ def _rellenar_preguntas_visibles(
                 respuestas_por_id,
                 preguntas_por_texto,
             )
-            _registrar_asociacion_campo(
-                "radio", componente_radio.get_attribute("id"), etiqueta, pregunta_id
-            )
             if pregunta_id is None:
                 continue
 
@@ -301,10 +285,6 @@ def _rellenar_preguntas_visibles(
                 _seleccionar_radio(componente_radio, str(valor))
                 preguntas_utilizadas.add(pregunta_id)
                 rellenadas += 1
-                print(
-                    f"Campo rellenado: pregunta_id={pregunta_id}",
-                    flush=True,
-                )
             continue
 
         componente_select = elemento.locator(
@@ -320,9 +300,6 @@ def _rellenar_preguntas_visibles(
                 respuestas_por_id,
                 preguntas_por_texto,
             )
-            _registrar_asociacion_campo(
-                "select", identificador, etiqueta, pregunta_id
-            )
             if pregunta_id is None:
                 continue
 
@@ -331,10 +308,6 @@ def _rellenar_preguntas_visibles(
                 campo.select_option(value=str(valor))
                 preguntas_utilizadas.add(pregunta_id)
                 rellenadas += 1
-                print(
-                    f"Campo rellenado: pregunta_id={pregunta_id}",
-                    flush=True,
-                )
 
     return rellenadas + _rellenar_por_etiqueta(
         page,
@@ -381,31 +354,7 @@ def _rellenar_por_etiqueta(
 
         preguntas_utilizadas.add(pregunta_id)
         rellenadas += 1
-        print(
-            f"Campo rellenado por etiqueta: pregunta_id={pregunta_id}",
-            flush=True,
-        )
-
     return rellenadas
-
-
-def _registrar_campos_visibles(page) -> None:
-    campos = page.locator("input:visible, select:visible, textarea:visible")
-    for indice in range(campos.count()):
-        detalle = campos.nth(indice).evaluate(
-            """element => ({
-                id: element.id,
-                type: element.type,
-                name: element.name,
-                etiqueta: element.labels?.[0]?.innerText?.trim()
-            })"""
-        )
-        print(
-            "Input visible: "
-            f"id={detalle['id']!r}, type={detalle['type']!r}, "
-            f"name={detalle['name']!r}, etiqueta={detalle['etiqueta']!r}",
-            flush=True,
-        )
 
 
 def _buscar_pregunta_id(
@@ -417,20 +366,6 @@ def _buscar_pregunta_id(
     if identificador and identificador in respuestas_por_id:
         return identificador
     return preguntas_por_texto.get(_normalizar_texto(texto))
-
-
-def _registrar_asociacion_campo(
-    tipo: str,
-    identificador: str | None,
-    texto: str,
-    pregunta_id: str | None,
-) -> None:
-    print(
-        "Campo visible: "
-        f"tipo={tipo}, id={identificador!r}, texto={texto!r}, "
-        f"pregunta_asociada={pregunta_id!r}",
-        flush=True,
-    )
 
 
 def _seleccionar_radio(componente, valor: str) -> None:

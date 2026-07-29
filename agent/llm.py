@@ -38,15 +38,12 @@ def _analizar_oferta(descripcion: str) -> dict:
         "format": "json",
         "stream": False,
     }
-    print("Enviando peticion a Ollama...")
     response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
 
     raw = response.json()
 
     contenido = raw["message"]["content"]
-    print("Contenido: ", contenido)
-
     resultado = json.loads(contenido)
 
     resultado["perfil_recomendado"] = resultado["perfil_recomendado"].lower()
@@ -106,6 +103,7 @@ def _responder_preguntas_oferta(
     response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
 
-    contenido = response.json()["message"]["content"]
+    raw = response.json()
+    contenido = raw["message"]["content"]
 
     return json.loads(contenido)

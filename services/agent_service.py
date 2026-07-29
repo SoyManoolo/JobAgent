@@ -1,8 +1,73 @@
+import json
+
+import requests
+
 from models import Estado
 from agent import llm
 from repositories import oferta_repository
 from database import SessionLocal
 from agent.prompts.cv import obtener_cv
+
+
+class RespuestaFormularioError(ValueError):
+    pass
+
+
+class OllamaNoDisponibleError(RuntimeError):
+    """Ollama no respondió correctamente tras los reintentos."""
+
+
+class RespuestaOllamaInvalidaError(ValueError):
+    """Ollama respondió, pero su contenido no cumple el contrato esperado."""
+
+
+def normalizar_respuestas_formulario(
+    preguntas: list[dict], resultado: dict
+) -> dict:
+    """Asocia por posición las respuestas del LLM con los IDs persistidos.
+
+    Los identificadores de LinkedIn son largos y no aportan contexto al modelo.
+    Por ello no se le pide que los reproduzca: el backend conserva los originales
+    y también normaliza el texto de las opciones seleccionadas.
+    """
+    respuestas = resultado.get("respuestas")
+    if not isinstance(respuestas, list):
+        raise ValueError("El resultado del LLM no contiene una lista de respuestas")
+    if len(respuestas) != len(preguntas):
+        raise ValueError(
+            "El número de respuestas del LLM no coincide con las preguntas"
+        )
+
+    respuestas_normalizadas = []
+    for pregunta, respuesta in zip(preguntas, respuestas):
+        if not isinstance(respuesta, dict):
+            raise ValueError("Cada respuesta del LLM debe ser un objeto JSON")
+
+        normalizada = {
+            "pregunta_id": pregunta["pregunta_id"],
+            "respuesta": respuesta.get("respuesta"),
+            "valor_seleccionado": respuesta.get("valor_seleccionado"),
+            "informacion_suficiente": respuesta.get("informacion_suficiente"),
+        }
+
+        if (
+            pregunta["tipo"] in {"radio", "select"}
+            and normalizada["informacion_suficiente"] is True
+        ):
+            opcion = next(
+                (
+                    item
+                    for item in pregunta["opciones"]
+                    if item["valor"] == normalizada["valor_seleccionado"]
+                ),
+                None,
+            )
+            if opcion is not None:
+                normalizada["respuesta"] = opcion["texto"]
+
+        respuestas_normalizadas.append(normalizada)
+
+    return {"respuestas": respuestas_normalizadas}
 
 
 def validar_respuestas_formulario(
@@ -13,17 +78,6 @@ def validar_respuestas_formulario(
 
     if not isinstance(respuestas, list):
         raise ValueError("El resultado del LLM no contiene una lista de respuestas")
-
-    preguntas_ids = [pregunta["pregunta_id"] for pregunta in preguntas]
-    respuestas_ids = [respuesta.get("pregunta_id") for respuesta in respuestas]
-
-    if len(respuestas_ids) != len(set(respuestas_ids)):
-        raise ValueError("El LLM ha devuelto identificadores de pregunta duplicados")
-
-    if set(respuestas_ids) != set(preguntas_ids):
-        raise ValueError(
-            "Los identificadores de las respuestas no coinciden con las preguntas"
-        )
 
     preguntas_por_id = {
         pregunta["pregunta_id"]: pregunta for pregunta in preguntas
@@ -71,8 +125,6 @@ def validar_respuestas_formulario(
 def _analizar_oferta(db, oferta):
     """Analiza una oferta y persiste el resultado de la clasificación."""
     resultado = llm.analizar_oferta(oferta.descripcion)
-
-    print("Resultado: ", resultado)
 
     if (
         resultado["idioma"] == "otro"
@@ -147,31 +199,78 @@ def responder_preguntas_oferta(id: str):
     with SessionLocal() as db:
         oferta = oferta_repository.obtener_oferta_id(db, id)
         if not oferta:
-            return {"error": "Oferta no encontrada"}
+            return None
 
         try:
             cv = obtener_cv(
                 oferta.perfil_recomendado.value,
                 oferta.idioma_oferta,
             )
-            respuestas = llm.responder_preguntas_oferta(oferta.descripcion, cv, preguntas=oferta.preguntas_formulario)
-            validar_respuestas_formulario(
-                oferta.preguntas_formulario,
-                respuestas,
-            )
+        except (AttributeError, ValueError) as error:
+            raise RespuestaFormularioError(
+                "La oferta no tiene un perfil e idioma válidos para elegir el CV"
+            ) from error
 
-            oferta_repository.modificar_datos_oferta(
-                db,
-                oferta.id,
-                {
-                    "respuestas_formulario": respuestas["respuestas"],
-                    "estado": Estado.PENDIENTE_RESPUESTAS,
-                },
-            )
-            return {"respuestas": respuestas}
-        except Exception as e:
-            print(f"Error respondiendo preguntas para la oferta {id}: {e}")
-            return {"error": "Error al procesar la solicitud"}
+        # No se retiene una conexión SQLite durante la inferencia de Ollama.
+        descripcion = oferta.descripcion
+        preguntas = oferta.preguntas_formulario
+
+    try:
+        respuestas = llm.responder_preguntas_oferta(
+            descripcion,
+            cv,
+            preguntas=preguntas,
+        )
+    except requests.RequestException as error:
+        print(
+            f"Ollama no respondió al generar respuestas para {id}: {error}",
+            flush=True,
+        )
+        raise OllamaNoDisponibleError(
+            "Ollama no respondió después de los reintentos"
+        ) from error
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        print(
+            f"Ollama devolvió una respuesta no válida para {id}: {error}",
+            flush=True,
+        )
+        raise RespuestaOllamaInvalidaError(
+            "Ollama devolvió una respuesta con un formato no válido"
+        ) from error
+
+    try:
+        respuestas = normalizar_respuestas_formulario(preguntas, respuestas)
+        todas_obligatorias_resueltas = validar_respuestas_formulario(
+            preguntas,
+            respuestas,
+        )
+    except ValueError as error:
+        print(
+            "Respuesta de Ollama rechazada para la oferta "
+            f"{id}: {error}",
+            flush=True,
+        )
+        raise RespuestaOllamaInvalidaError(str(error)) from error
+
+    estado_final = (
+        Estado.LISTA_PARA_APLICAR
+        if todas_obligatorias_resueltas
+        else Estado.PENDIENTE_RESPUESTAS
+    )
+    with SessionLocal() as db:
+        oferta_actualizada = oferta_repository.modificar_datos_oferta(
+            db,
+            id,
+            {
+                "respuestas_formulario": respuestas["respuestas"],
+                "estado": estado_final,
+            },
+        )
+
+    if oferta_actualizada is None:
+        return None
+
+    return {"respuestas": respuestas, "estado": estado_final.value}
 
 
 def responder_preguntas_ofertas(limite: int = 5):
@@ -192,19 +291,26 @@ def responder_preguntas_ofertas(limite: int = 5):
                 )
 
                 respuestas = llm.responder_preguntas_oferta(oferta.descripcion, cv, preguntas=oferta.preguntas_formulario)
-                validar_respuestas_formulario(
+                respuestas = normalizar_respuestas_formulario(
                     oferta.preguntas_formulario,
                     respuestas,
                 )
-                print(f"Respuestas para la oferta {oferta.id}: {respuestas}")
+                todas_obligatorias_resueltas = validar_respuestas_formulario(
+                    oferta.preguntas_formulario,
+                    respuestas,
+                )
                 procesadas += 1
 
                 oferta_repository.modificar_datos_oferta(
                     db,
-                oferta.id,
+                    oferta.id,
                     {
                         "respuestas_formulario": respuestas["respuestas"],
-                        "estado": Estado.PENDIENTE_RESPUESTAS,
+                        "estado": (
+                            Estado.LISTA_PARA_APLICAR
+                            if todas_obligatorias_resueltas
+                            else Estado.PENDIENTE_RESPUESTAS
+                        ),
                     },
                 )
             except Exception as e:

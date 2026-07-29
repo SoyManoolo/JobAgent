@@ -184,7 +184,7 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-
 
 ### `POST /agent/ofertas/responder`
 
-Genera respuestas para hasta el número indicado de ofertas en `pendientes_respuestas`. Las respuestas quedan pendientes de revisión manual; solo la confirmación explícita las pasa a `lista_para_aplicar`.
+Genera respuestas para hasta el número indicado de ofertas en `pendientes_respuestas`. Si todas las preguntas obligatorias reciben una respuesta válida, la oferta pasa a `lista_para_aplicar`; si queda alguna sin resolver, permanece en `pendientes_respuestas`.
 
 | Query parameter | Tipo | Predeterminado | Descripción |
 | --- | --- | --- | --- |
@@ -217,11 +217,17 @@ Genera y guarda las respuestas de una única oferta.
         "valor_seleccionado": null
       }
     ]
-  }
+  },
+  "estado": "lista_para_aplicar"
 }
 ```
 
-Si no se encuentra la oferta o el procesamiento falla, la implementación actual devuelve `{"error":"..."}` con estado HTTP `200`; los clientes deben comprobar ese campo. Esto es una limitación temporal: se sustituirá por códigos HTTP adecuados cuando se mejore el manejo de errores.
+Errores del endpoint individual:
+
+- `404`: la oferta no existe.
+- `409`: la oferta no tiene perfil o idioma válidos para seleccionar el CV.
+- `502`: Ollama respondió, pero su JSON o sus respuestas no cumplen el contrato del formulario.
+- `503`: Ollama no respondió después de agotar los reintentos.
 
 ## Ofertas
 

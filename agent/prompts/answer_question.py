@@ -44,8 +44,8 @@ Reglas:
 - Para preguntas de tipo `text` o `number`, `valor_seleccionado` debe ser `null`.
 - Si no hay información suficiente, usa `respuesta: null`, `valor_seleccionado: null` y marca `informacion_suficiente: false`.
 - No menciones las fuentes de contexto utilizadas.
-- Conserva exactamente el identificador de cada pregunta.
-- Responde a todas las preguntas recibidas.
+- Responde a todas las preguntas recibidas en exactamente el mismo orden en que aparecen en `Preguntas`.
+- No incluyas `pregunta_id`: el sistema asociará cada respuesta con su pregunta según la posición.
 - Devuelve únicamente JSON válido.
 - No utilices Markdown ni escribas texto fuera del JSON.
 
@@ -54,7 +54,6 @@ El JSON debe tener exactamente esta estructura:
 {{
     "respuestas": [
         {{
-            "pregunta_id": "identificador original",
             "respuesta": "respuesta generada o null",
             "valor_seleccionado": "valor exacto de la opción elegida o null",
             "informacion_suficiente": true

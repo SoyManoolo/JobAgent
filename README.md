@@ -100,7 +100,7 @@ El catálogo resumido de endpoints y ejemplos está en [API.md](API.md).
 1. Se extraen ofertas de LinkedIn y se guardan como `extraida`.
 2. El agente las analiza con Ollama y las marca como `analizada` o `descartada`.
 3. Para las ofertas analizadas con Solicitud sencilla, se extraen las preguntas; quedan `pendientes_respuestas` o `lista_para_aplicar` si no hay preguntas.
-4. El agente prepara las respuestas usando el CV adecuado; la persona las revisa y confirma la oferta para dejarla en `lista_para_aplicar`.
+4. El agente prepara las respuestas usando el CV adecuado. Si resuelve todas las obligatorias, deja la oferta en `lista_para_aplicar`; en caso contrario permanece en `pendientes_respuestas` para completarla manualmente.
 5. La persona inicia el envío manualmente desde el dashboard o API. Playwright completa Easy Apply, elige el CV privado configurado y sólo marca la oferta como `aplicada` si LinkedIn confirma el envío.
 
 ## Roadmap

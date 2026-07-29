@@ -25,4 +25,27 @@ def responder_preguntas_ofertas(limite: int = Query(default=5, ge=1, le=100)):
 
 @router.post("/ofertas/responder/{id}")
 def responder_preguntas_oferta(id: str):
-    return agent_service.responder_preguntas_oferta(id)
+    try:
+        resultado = agent_service.responder_preguntas_oferta(id)
+    except agent_service.RespuestaFormularioError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+    except agent_service.OllamaNoDisponibleError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error
+    except agent_service.RespuestaOllamaInvalidaError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+
+    if resultado is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Oferta no encontrada",
+        )
+    return resultado

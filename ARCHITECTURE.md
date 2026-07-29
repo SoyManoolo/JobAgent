@@ -73,7 +73,7 @@ sequenceDiagram
 
 El extractor de LinkedIn limita la recolección a 200 ofertas. Antes de insertar, el repositorio detecta duplicados tanto por `id_plataforma` + plataforma como por empresa y título. Las implementaciones de InfoJobs, Indeed y Glassdoor todavía no están disponibles; sus endpoints devuelven una respuesta vacía.
 
-Playwright utiliza `scraper/profile/` como perfil persistente. Esto permite una sesión autenticada local, pero ese directorio debe tratarse como dato sensible.
+Playwright utiliza `profile/` como perfil persistente. Esto permite una sesión autenticada local, pero ese directorio debe tratarse como dato sensible.
 
 ## Flujo de análisis con IA
 

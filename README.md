@@ -56,7 +56,7 @@ python init_db.py
 
 En Windows, activa el entorno con `venv\Scripts\activate`.
 
-Para que Playwright reutilice una sesión de LinkedIn, ejecuta una primera extracción en modo visible e inicia sesión en la ventana que se abre. El perfil local se guarda en `scraper/profile/` y no debe compartirse ni subirse al repositorio.
+Para que Playwright reutilice una sesión de LinkedIn, ejecuta una primera extracción en modo visible e inicia sesión en la ventana que se abre. El perfil local se guarda en `profile/` y no debe compartirse ni subirse al repositorio.
 
 ## Variables de entorno
 

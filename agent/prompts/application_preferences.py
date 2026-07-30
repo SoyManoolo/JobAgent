@@ -11,8 +11,12 @@ Preferencias y datos verificables del candidato para formularios:
 - Guardias rotativas o soporte 24/7: no.
 - Autorización de trabajo: está legalmente autorizado para trabajar en España
   y no necesita patrocinio ni visado de la empresa.
-- Expectativa salarial bruta anual: rango de 22.000 € a 28.000 €. Cuando un
-  campo numérico solo admita una cifra, propone 25.000 € para revisión manual.
+- Expectativa salarial bruta anual: rango de 22.000 € a 28.000 €. Si pide una
+  cifra única, ajusta la propuesta según la oferta: 22.000–24.000 € para puestos
+  junior básicos o de formación; 24.000–26.000 € para desarrollo junior estándar;
+  26.000–28.000 € para puestos con mayor especialización técnica, especialmente
+  backend o IA aplicada. Usa 25.000 € solo si la oferta no aporta señales para
+  situarse en otro punto del rango. No propongas una cifra fuera de ese rango.
 - Formación: tiene un CFGS de Desarrollo de Aplicaciones Web y un Curso de
   Especialización en Inteligencia Artificial y Big Data completado. No tiene
   título universitario ni puede firmar un convenio de prácticas con un centro

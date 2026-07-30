@@ -373,7 +373,20 @@ def _seleccionar_radio(componente, valor: str) -> None:
     for indice in range(opciones.count()):
         opcion = opciones.nth(indice)
         if opcion.get_attribute("value") == valor:
-            opcion.check()
+            if not opcion.is_checked():
+                identificador = opcion.get_attribute("id")
+                etiqueta = componente.locator(
+                    f'label[for="{identificador}"]'
+                ).first
+                if etiqueta.count() > 0:
+                    etiqueta.click(force=True)
+                else:
+                    opcion.check(force=True)
+
+            if not opcion.is_checked():
+                raise FormularioEasyApplyError(
+                    f"LinkedIn no confirmó la selección de '{valor}'"
+                )
             return
     raise FormularioEasyApplyError(
         f"No se encontró la opción de radio con valor '{valor}'"

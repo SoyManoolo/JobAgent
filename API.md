@@ -154,6 +154,10 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar?limite=50'
 {"total":12,"procesadas":11,"errores":1}
 ```
 
+Si ya existe un análisis por lote o individual en ejecución, devuelve `409` con
+`{"detail":"Ya hay un análisis de ofertas en curso"}`. No inicia una segunda
+petición a Ollama.
+
 ### `POST /agent/ofertas/procesar/{id}`
 
 Analiza una única oferta activa identificada por su UUID mediante Ollama. Guarda los datos de clasificación y actualiza su estado a `analizada` o `descartada` según el resultado. Si el análisis falla, la oferta queda en estado `error` y la API responde con un error `500`.
@@ -180,6 +184,7 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-
 ```
 
 - `404`: `{"detail":"Oferta no encontrada"}`. También se devuelve para ofertas eliminadas lógicamente.
+- `409`: ya hay otro análisis de ofertas en curso.
 - `500`: no se pudo completar el análisis; la oferta queda marcada como `error`.
 
 ### `POST /agent/ofertas/responder`

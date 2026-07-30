@@ -6,12 +6,19 @@ router = APIRouter(prefix="/agent", tags=["Agente"])
 
 @router.post("/ofertas/procesar")
 def procesar_ofertas(limite: int = Query(default=25, ge=1, le=100)):
-    return agent_service.procesar_ofertas_extraidas(limite=limite)
+    try:
+        return agent_service.procesar_ofertas_extraidas(limite=limite)
+    except agent_service.AnalisisEnCursoError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 
 
 @router.post("/ofertas/procesar/{id}")
 def procesar_oferta(id: str):
-    oferta = agent_service.procesar_oferta(id)
+    try:
+        oferta = agent_service.procesar_oferta(id)
+    except agent_service.AnalisisEnCursoError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
     if not oferta:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Oferta no encontrada")
 

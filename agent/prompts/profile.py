@@ -32,6 +32,10 @@ Preferencias de ubicación:
 - Fuera de Barcelona solo acepta puestos remotos.
 - Si una oferta exige relocalización fuera de Barcelona, debe descartarse
   automáticamente con `score_encaje` 0.
+- Si la ubicación está fuera de Barcelona y la oferta es presencial, híbrida o
+  no confirma claramente que sea remota, debe descartarse automáticamente con
+  `score_encaje` 0. Si está fuera de Barcelona y es claramente remota, no se
+  penaliza por ubicación.
 
 Instrucciones para la evaluación:
 

@@ -11,10 +11,23 @@ load_dotenv()
 URL_OLLAMA = os.getenv("OLLAMA_URL") or "http://localhost:11434/api/chat"
 MODEL = os.getenv("OLLAMA_MODEL")
 REQUEST_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "60"))
+NUM_PREDICT = max(1, int(os.getenv("OLLAMA_NUM_PREDICT", "350")))
+TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.1"))
+NUM_CTX = max(1, int(os.getenv("OLLAMA_NUM_CTX", "16384")))
+THINK = os.getenv("OLLAMA_THINK", "false").lower() in {"1", "true", "yes"}
+KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m")
 
 PERFILES = {"backend", "ia", "desconocido"}
 IDIOMAS = {"es", "en", "ca", "otro"}
 SENIORITY = {"junior", "mid", "senior", "desconocido"}
+
+
+def _opciones_ollama() -> dict:
+    return {
+        "num_predict": NUM_PREDICT,
+        "temperature": TEMPERATURE,
+        "num_ctx": NUM_CTX,
+    }
 
 
 def analizar_oferta(descripcion: str) -> dict:
@@ -37,6 +50,9 @@ def _analizar_oferta(descripcion: str) -> dict:
         ],
         "format": "json",
         "stream": False,
+        "think": THINK,
+        "keep_alive": KEEP_ALIVE,
+        "options": _opciones_ollama(),
     }
     response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
@@ -98,6 +114,9 @@ def _responder_preguntas_oferta(
         ],
         "format": "json",
         "stream": False,
+        "think": THINK,
+        "keep_alive": KEEP_ALIVE,
+        "options": _opciones_ollama(),
     }
 
     response = requests.post(URL_OLLAMA, json=payload, timeout=REQUEST_TIMEOUT)

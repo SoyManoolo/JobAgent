@@ -71,6 +71,13 @@ OLLAMA_MODEL=<tu_modelo>
 
 # Opcional; 60 segundos por defecto
 OLLAMA_TIMEOUT=60
+
+# Ajustes de inferencia para tareas JSON estructuradas
+OLLAMA_NUM_PREDICT=350
+OLLAMA_TEMPERATURE=0.1
+OLLAMA_NUM_CTX=8192
+OLLAMA_THINK=false
+OLLAMA_KEEP_ALIVE=10m
 ```
 
 Inicia Ollama y descarga el modelo que hayas elegido antes de procesar ofertas. Por ejemplo, consulta los modelos instalados con `ollama list`.

@@ -1,4 +1,5 @@
 import json
+from functools import wraps
 from threading import Lock
 
 import requests
@@ -26,12 +27,31 @@ class AnalisisEnCursoError(RuntimeError):
     """Ya hay una ejecución de análisis de ofertas usando Ollama."""
 
 
+class OllamaEnUsoError(RuntimeError):
+    """Otra operación ya está usando Ollama."""
+
+
 _bloqueo_analisis = Lock()
+_bloqueo_ollama = Lock()
 
 
 def _adquirir_bloqueo_analisis() -> None:
     if not _bloqueo_analisis.acquire(blocking=False):
         raise AnalisisEnCursoError("Ya hay un análisis de ofertas en curso")
+
+
+def _requiere_ollama(funcion):
+    """Evita inferencias concurrentes contra la única instancia de Ollama."""
+    @wraps(funcion)
+    def envuelta(*args, **kwargs):
+        if not _bloqueo_ollama.acquire(blocking=False):
+            raise OllamaEnUsoError("Ollama ya está procesando otra tarea")
+        try:
+            return funcion(*args, **kwargs)
+        finally:
+            _bloqueo_ollama.release()
+
+    return envuelta
 
 
 def normalizar_respuestas_formulario(
@@ -163,6 +183,7 @@ def _analizar_oferta(db, oferta):
     return oferta_repository.modificar_datos_oferta(db, oferta.id, datos_actualizar)
 
 
+@_requiere_ollama
 def procesar_oferta(id: str):
     """Analiza una única oferta activa identificada por su UUID.
 
@@ -188,6 +209,7 @@ def procesar_oferta(id: str):
         _bloqueo_analisis.release()
 
 
+@_requiere_ollama
 def procesar_ofertas_extraidas(limite: int = 25):
     _adquirir_bloqueo_analisis()
     try:
@@ -216,6 +238,7 @@ def procesar_ofertas_extraidas(limite: int = 25):
         _bloqueo_analisis.release()
 
 
+@_requiere_ollama
 def responder_preguntas_oferta(id: str):
     with SessionLocal() as db:
         oferta = oferta_repository.obtener_oferta_id(db, id)
@@ -294,6 +317,7 @@ def responder_preguntas_oferta(id: str):
     return {"respuestas": respuestas, "estado": estado_final.value}
 
 
+@_requiere_ollama
 def responder_preguntas_ofertas(limite: int = 5):
     with SessionLocal() as db:
         ofertas = oferta_repository.obtener_ofertas_estado(

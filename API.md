@@ -191,6 +191,10 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-
 
 Genera respuestas para hasta el número indicado de ofertas en `pendientes_respuestas`. Si todas las preguntas obligatorias reciben una respuesta válida, la oferta pasa a `lista_para_aplicar`; si queda alguna sin resolver, permanece en `pendientes_respuestas`.
 
+Todos los endpoints del agente comparten una única reserva de Ollama. Si otro
+análisis o generación de respuestas está activo, el endpoint devuelve `409` con
+`{"detail":"Ollama ya está procesando otra tarea"}`.
+
 | Query parameter | Tipo | Predeterminado | Descripción |
 | --- | --- | --- | --- |
 | `limite` | integer | `5` | Número máximo de ofertas para las que se generarán respuestas. Admite valores entre `1` y `100`. |

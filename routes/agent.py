@@ -4,10 +4,16 @@ from services import agent_service
 router = APIRouter(prefix="/agent", tags=["Agente"])
 
 
+def _error_ollama_en_uso(error: agent_service.OllamaEnUsoError) -> HTTPException:
+    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error))
+
+
 @router.post("/ofertas/procesar")
 def procesar_ofertas(limite: int = Query(default=25, ge=1, le=100)):
     try:
         return agent_service.procesar_ofertas_extraidas(limite=limite)
+    except agent_service.OllamaEnUsoError as error:
+        raise _error_ollama_en_uso(error) from error
     except agent_service.AnalisisEnCursoError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 
@@ -16,6 +22,8 @@ def procesar_ofertas(limite: int = Query(default=25, ge=1, le=100)):
 def procesar_oferta(id: str):
     try:
         oferta = agent_service.procesar_oferta(id)
+    except agent_service.OllamaEnUsoError as error:
+        raise _error_ollama_en_uso(error) from error
     except agent_service.AnalisisEnCursoError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 
@@ -27,13 +35,18 @@ def procesar_oferta(id: str):
 
 @router.post("/ofertas/responder")
 def responder_preguntas_ofertas(limite: int = Query(default=5, ge=1, le=100)):
-    return agent_service.responder_preguntas_ofertas(limite=limite)
+    try:
+        return agent_service.responder_preguntas_ofertas(limite=limite)
+    except agent_service.OllamaEnUsoError as error:
+        raise _error_ollama_en_uso(error) from error
 
 
 @router.post("/ofertas/responder/{id}")
 def responder_preguntas_oferta(id: str):
     try:
         resultado = agent_service.responder_preguntas_oferta(id)
+    except agent_service.OllamaEnUsoError as error:
+        raise _error_ollama_en_uso(error) from error
     except agent_service.RespuestaFormularioError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

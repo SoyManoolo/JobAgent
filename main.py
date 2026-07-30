@@ -16,7 +16,6 @@ app.include_router(agent_routes, prefix="/api/v1")
 app.include_router(scraper_routes, prefix="/api/v1")
 app.include_router(dashboard_routes, prefix="/api/v1")
 
-
 @app.get("/")
 def read_root():
     return {"status": "JobAgent API running successfully"}

@@ -39,6 +39,16 @@ def modificar_oferta(id, datos):
         return oferta_repository.modificar_datos_oferta(db, id, datos)
 
 
+def marcar_error_oferta(db, id: str):
+    return oferta_repository.modificar_datos_oferta(
+        db,
+        id,
+        {
+            "estado": Estado.ERROR,
+        },
+    )
+
+
 def editar_respuesta_formulario(id: str, pregunta_id: str, datos):
     with SessionLocal() as db:
         oferta = oferta_repository.obtener_oferta_id(db, id)

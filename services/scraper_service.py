@@ -11,6 +11,7 @@ from database import SessionLocal
 from models import Estado
 from repositories import oferta_repository
 from services.retry import ejecutar_con_reintentos
+from services.oferta_service import marcar_error_oferta
 
 
 class OfertaNoEncontradaError(ValueError):
@@ -61,14 +62,18 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
                 no_reintentar=(SolicitudNoDisponibleError,),
             )
 
-        except SolicitudNoDisponibleError:
-            eliminada = oferta_repository.eliminar_oferta(db, id)
+        except SolicitudNoDisponibleError as error:
+            marcar_error_oferta(db, id)
 
             return {
                 "oferta_id": id,
                 "disponible": False,
-                "oferta_eliminada": bool(eliminada),
+                "oferta_eliminada": False,
+                "error": str(error),
             }
+        except Exception as error:
+            marcar_error_oferta(db, id)
+            raise
 
         estado_final = (
             Estado.PENDIENTE_RESPUESTAS

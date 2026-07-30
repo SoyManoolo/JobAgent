@@ -9,6 +9,7 @@ from agent import llm
 from repositories import oferta_repository
 from database import SessionLocal
 from agent.prompts.cv import obtener_cv
+from services.oferta_service import marcar_error_oferta
 
 
 class RespuestaFormularioError(ValueError):
@@ -50,6 +51,21 @@ def _requiere_ollama(funcion):
             return funcion(*args, **kwargs)
         finally:
             _bloqueo_ollama.release()
+
+    return envuelta
+
+
+def _marca_error_respuestas(funcion):
+    """Registra el fallo de una generación individual para revisión manual."""
+    @wraps(funcion)
+    def envuelta(id: str, *args, **kwargs):
+        try:
+            return funcion(id, *args, **kwargs)
+        except Exception as error:
+            with SessionLocal() as db:
+                if oferta_repository.obtener_oferta_id(db, id) is not None:
+                    marcar_error_oferta(db, id)
+            raise
 
     return envuelta
 
@@ -200,10 +216,8 @@ def procesar_oferta(id: str):
 
             try:
                 return _analizar_oferta(db, oferta)
-            except Exception:
-                oferta_repository.modificar_datos_oferta(
-                    db, oferta.id, {"estado": Estado.ERROR}
-                )
+            except Exception as error:
+                marcar_error_oferta(db, oferta.id)
                 raise
     finally:
         _bloqueo_analisis.release()
@@ -228,9 +242,7 @@ def procesar_ofertas_extraidas(limite: int = 25):
                     procesadas += 1
                 except Exception as e:
                     print(f"Error procesando la oferta {oferta.id}: {e}")
-                    oferta_repository.modificar_datos_oferta(
-                        db, oferta.id, {"estado": Estado.ERROR}
-                    )
+                    marcar_error_oferta(db, oferta.id)
                     errores += 1
 
         return {"total": total, "procesadas": procesadas, "errores": errores}
@@ -239,6 +251,7 @@ def procesar_ofertas_extraidas(limite: int = 25):
 
 
 @_requiere_ollama
+@_marca_error_respuestas
 def responder_preguntas_oferta(id: str):
     with SessionLocal() as db:
         oferta = oferta_repository.obtener_oferta_id(db, id)
@@ -360,6 +373,7 @@ def responder_preguntas_ofertas(limite: int = 5):
                 )
             except Exception as e:
                 print(f"Error respondiendo preguntas para la oferta {oferta.id}: {e}")
+                marcar_error_oferta(db, oferta.id)
                 errores += 1
             continue
 

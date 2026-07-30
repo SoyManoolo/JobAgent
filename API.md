@@ -79,7 +79,7 @@ Busca ofertas analizadas con Solicitud sencilla sin preguntas almacenadas y extr
 
 ### `POST /scraper/linkedin/easyapply/procesar/{id}`
 
-Extrae y guarda las preguntas de Easy Apply de una única oferta identificada por su UUID. Si no hay preguntas adicionales, la oferta pasa a `lista_para_aplicar`; si las hay, pasa a `pendientes_respuestas`. Si la solicitud ya no está disponible, la oferta se elimina lógicamente.
+Extrae y guarda las preguntas de Easy Apply de una única oferta identificada por su UUID. Si no hay preguntas adicionales, la oferta pasa a `lista_para_aplicar`; si las hay, pasa a `pendientes_respuestas`. Si LinkedIn informa de que la solicitud ya no está disponible, la oferta pasa a `error` para revisión manual.
 
 ```bash
 curl -X POST 'http://127.0.0.1:8000/api/v1/scraper/linkedin/easyapply/procesar/bf3877ce-cc2d-4c57-a1eb-05d4048899a5'

@@ -342,13 +342,15 @@ Marca una oferta como eliminada; no borra físicamente su registro.
 
 ### `GET /dashboard/stats`
 
-Devuelve métricas de las ofertas no eliminadas: embudo por estado, trabajo pendiente, puntuaciones de encaje, Easy Apply, perfil recomendado, plataforma y tasa de aplicación.
+Devuelve métricas de las ofertas activas: embudo por estado, trabajo pendiente, puntuaciones de encaje, Easy Apply, perfil recomendado, plataforma y tasa de aplicación. También informa del número histórico de ofertas eliminadas y su porcentaje respecto al total histórico.
 
 **Respuesta `200`**
 
 ```json
 {
   "total_ofertas": 42,
+  "ofertas_eliminadas": 3,
+  "porcentaje_ofertas_eliminadas": 6.67,
   "aplicadas": 5,
   "descartadas": 12,
   "por_estado": {
@@ -385,7 +387,7 @@ Devuelve métricas de las ofertas no eliminadas: embudo por estado, trabajo pend
 }
 ```
 
-`ofertas_prioritarias` contabiliza ofertas con encaje de 70 o más que están analizadas, pendientes de respuesta o listas para aplicar. `tasa_aplicacion` es el porcentaje de ofertas aplicadas respecto al total activo.
+`total_ofertas` y el resto de métricas operativas excluyen las eliminadas. `porcentaje_ofertas_eliminadas` se calcula como `ofertas_eliminadas / (ofertas activas + ofertas eliminadas) × 100`. `ofertas_prioritarias` contabiliza ofertas con encaje de 70 o más que están analizadas, pendientes de respuesta o listas para aplicar. `tasa_aplicacion` es el porcentaje de ofertas aplicadas respecto al total activo.
 
 ### `PATCH /dashboard/ofertas/{id}/notas`
 

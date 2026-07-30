@@ -9,6 +9,8 @@ def obtener_stats(db: Session):
     query_base = db.query(Oferta).filter(Oferta.eliminado.is_(False))
 
     total = query_base.count()
+    total_eliminadas = db.query(Oferta).filter(Oferta.eliminado.is_(True)).count()
+    total_historico = total + total_eliminadas
 
     estados = {estado.value: 0 for estado in Estado}
     for estado, cantidad in query_base.with_entities(
@@ -67,6 +69,12 @@ def obtener_stats(db: Session):
 
     return {
         "total_ofertas": total,
+        "ofertas_eliminadas": total_eliminadas,
+        "porcentaje_ofertas_eliminadas": (
+            round((total_eliminadas / total_historico) * 100, 2)
+            if total_historico
+            else 0
+        ),
         "aplicadas": aplicadas,
         "descartadas": estados[Estado.DESCARTADA.value],
         "por_estado": estados,

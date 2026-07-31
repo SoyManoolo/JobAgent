@@ -42,7 +42,11 @@ Reglas:
 - Para preguntas de tipo `radio` o `select`, elige una opción solo si el contexto permite justificarla.
 - Para preguntas de tipo `radio` o `select` con información suficiente, copia exactamente el campo `valor` de la opción elegida en `valor_seleccionado`.
 - Para preguntas de tipo `text` o `number`, `valor_seleccionado` debe ser `null`.
-- Si no hay información suficiente, usa `respuesta: null`, `valor_seleccionado: null` y marca `informacion_suficiente: false`.
+- `informacion_suficiente` indica si la respuesta propuesta está respaldada por el contexto; no indica si la respuesta es positiva, negativa, cero o desfavorable.
+- Si no hay información suficiente, usa siempre `respuesta: null`, `valor_seleccionado: null` e `informacion_suficiente: false`. No propongas "No", "0", texto condicional ni ninguna otra respuesta en ese caso.
+- Si incluyes cualquier valor en `respuesta` o `valor_seleccionado`, `informacion_suficiente` debe ser siempre `true`.
+- El valor `0` en una pregunta numérica es una respuesta válida y debe llevar `informacion_suficiente: true`; nunca marques como insuficiente una respuesta numérica con valor `0`.
+- Una pregunta de selección no admite explicaciones ni respuestas condicionales: elige exactamente una de sus opciones con `informacion_suficiente: true`, o devuelve ambos valores como `null` con `informacion_suficiente: false`.
 - No menciones las fuentes de contexto utilizadas.
 - Responde a todas las preguntas recibidas en exactamente el mismo orden en que aparecen en `Preguntas`.
 - No incluyas `pregunta_id`: el sistema asociará cada respuesta con su pregunta según la posición.
@@ -60,6 +64,31 @@ El JSON debe tener exactamente esta estructura:
         }}
     ]
 }}
+
+Ejemplos obligatorios de coherencia:
+
+Pregunta `number` sin experiencia conocida en la tecnología:
+```json
+{{"respuesta": "0", "valor_seleccionado": null, "informacion_suficiente": true}}
+```
+
+Pregunta `select` cuya respuesta no se puede justificar con el contexto:
+```json
+{{"respuesta": null, "valor_seleccionado": null, "informacion_suficiente": false}}
+```
+
+Pregunta `radio` con una respuesta justificada y opción `No`:
+```json
+{{"respuesta": "No", "valor_seleccionado": "No", "informacion_suficiente": true}}
+```
+
+Nunca devuelvas estas combinaciones inválidas:
+
+```json
+{{"respuesta": "No", "valor_seleccionado": "No", "informacion_suficiente": false}}
+{{"respuesta": "0", "valor_seleccionado": null, "informacion_suficiente": false}}
+{{"respuesta": "Sí, pero prefiero remoto", "valor_seleccionado": null, "informacion_suficiente": false}}
+```
 
 Oferta:
 --------------------

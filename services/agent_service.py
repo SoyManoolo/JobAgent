@@ -119,6 +119,31 @@ def normalizar_respuestas_formulario(
     return {"respuestas": respuestas_normalizadas}
 
 
+def _imprimir_error_validacion_respuesta(
+    pregunta: dict, respuesta: dict, motivo: str
+) -> None:
+    """Muestra el contexto mínimo necesario para diagnosticar una respuesta inválida."""
+    print(
+        "Validación rechazada de respuesta de Ollama: "
+        + json.dumps(
+            {
+                "motivo": motivo,
+                "pregunta": {
+                    "pregunta_id": pregunta.get("pregunta_id"),
+                    "texto": pregunta.get("texto"),
+                    "tipo": pregunta.get("tipo"),
+                    "obligatoria": pregunta.get("obligatoria"),
+                    "opciones": pregunta.get("opciones"),
+                },
+                "respuesta_normalizada": respuesta,
+            },
+            ensure_ascii=False,
+            default=str,
+        ),
+        flush=True,
+    )
+
+
 def validar_respuestas_formulario(
     preguntas: list[dict], resultado: dict
 ) -> bool:
@@ -137,6 +162,9 @@ def validar_respuestas_formulario(
         pregunta = preguntas_por_id[respuesta["pregunta_id"]]
 
         if not isinstance(respuesta.get("informacion_suficiente"), bool):
+            _imprimir_error_validacion_respuesta(
+                pregunta, respuesta, "informacion_suficiente no es booleano"
+            )
             raise ValueError("informacion_suficiente debe ser un booleano")
 
         informacion_suficiente = respuesta["informacion_suficiente"]
@@ -145,6 +173,11 @@ def validar_respuestas_formulario(
 
         if not informacion_suficiente:
             if texto_respuesta is not None or valor_seleccionado is not None:
+                _imprimir_error_validacion_respuesta(
+                    pregunta,
+                    respuesta,
+                    "informacion_suficiente=false con respuesta o valor_seleccionado no nulo",
+                )
                 raise ValueError(
                     "Una respuesta sin información suficiente debe contener valores nulos"
                 )
@@ -153,6 +186,9 @@ def validar_respuestas_formulario(
             continue
 
         if not isinstance(texto_respuesta, str) or not texto_respuesta.strip():
+            _imprimir_error_validacion_respuesta(
+                pregunta, respuesta, "informacion_suficiente=true sin texto de respuesta"
+            )
             raise ValueError("Una respuesta suficiente debe incluir texto")
 
         if pregunta["tipo"] in {"radio", "select"}:
@@ -160,10 +196,20 @@ def validar_respuestas_formulario(
                 opcion["valor"] for opcion in pregunta["opciones"]
             }
             if valor_seleccionado not in valores_opciones:
+                _imprimir_error_validacion_respuesta(
+                    pregunta,
+                    respuesta,
+                    "valor_seleccionado no coincide con las opciones disponibles",
+                )
                 raise ValueError(
                     "valor_seleccionado no coincide con una opción de la pregunta"
                 )
         elif valor_seleccionado is not None:
+            _imprimir_error_validacion_respuesta(
+                pregunta,
+                respuesta,
+                "pregunta de texto o número con valor_seleccionado no nulo",
+            )
             raise ValueError(
                 "Las preguntas de texto o número no deben tener valor_seleccionado"
             )

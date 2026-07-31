@@ -125,4 +125,14 @@ def _responder_preguntas_oferta(
     raw = response.json()
     contenido = raw["message"]["content"]
 
+    print(
+        "Respuesta bruta de Ollama al generar respuestas: "
+        + json.dumps(raw, ensure_ascii=False, default=str),
+        flush=True,
+    )
+    print(
+        f"Contenido de Ollama al generar respuestas: {contenido}",
+        flush=True,
+    )
+
     return json.loads(contenido)

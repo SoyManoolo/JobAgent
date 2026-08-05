@@ -96,6 +96,25 @@ def enviar_solicitud(
             if accion == "revisar":
                 boton.click()
                 page.wait_for_timeout(ESPERA_RENDERIZADO_MS)
+                error_validacion = _obtener_error_validacion(page)
+                if error_validacion is not None:
+                    rellenadas_despues_de_validacion = _rellenar_preguntas_visibles(
+                        page,
+                        preguntas,
+                        respuestas_por_id,
+                        preguntas_por_texto,
+                        preguntas_utilizadas,
+                    )
+                    campos_rellenados += rellenadas_despues_de_validacion
+                    if rellenadas_despues_de_validacion > 0:
+                        print(
+                            "Easy Apply: campos rellenados tras bloquearse "
+                            f"la revisión: {rellenadas_despues_de_validacion}",
+                            flush=True,
+                        )
+                        continue
+                    raise FormularioEasyApplyError(error_validacion)
+
                 desplazamientos = _desplazar_revision_hasta_final(page)
                 print(
                     "Easy Apply: desplazamiento tras revisión: "

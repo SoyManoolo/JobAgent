@@ -1,3 +1,4 @@
+import json
 import re
 import unicodedata
 
@@ -9,6 +10,9 @@ from scraper.linkedin.easy_apply_scraper import abrir_easy_apply
 
 
 MAX_PASOS_FORMULARIO = 20
+ESPERA_RENDERIZADO_MS = 1_000
+ESPERA_AVANCE_MS = 1_500
+INTENTOS_BUSQUEDA_ACCION = 40
 
 
 class FormularioEasyApplyError(Exception):
@@ -56,8 +60,9 @@ def enviar_solicitud(
         campos_rellenados = 0
         cv_seleccionado = False
 
-        for _ in range(MAX_PASOS_FORMULARIO):
-            page.wait_for_timeout(500)
+        acciones_detectadas = []
+        for numero_paso in range(1, MAX_PASOS_FORMULARIO + 1):
+            page.wait_for_timeout(ESPERA_RENDERIZADO_MS)
             if not cv_seleccionado:
                 cv_seleccionado = _seleccionar_cv_linkedin(page, nombre_cv)
             campos_rellenados += _rellenar_preguntas_visibles(
@@ -69,6 +74,9 @@ def enviar_solicitud(
             )
 
             accion, boton = _esperar_siguiente_accion(page)
+            texto_boton = boton.inner_text().strip()
+            acciones_detectadas.append(f"{numero_paso}:{accion}:{texto_boton}")
+            _imprimir_traza_paso_formulario(page, numero_paso, accion, texto_boton)
 
             if accion == "enviar":
                 _validar_preguntas_obligatorias(
@@ -87,8 +95,13 @@ def enviar_solicitud(
 
             if accion == "revisar":
                 boton.click()
-                page.wait_for_timeout(500)
-                _desplazar_revision_hasta_final(page)
+                page.wait_for_timeout(ESPERA_RENDERIZADO_MS)
+                desplazamientos = _desplazar_revision_hasta_final(page)
+                print(
+                    "Easy Apply: desplazamiento tras revisión: "
+                    + json.dumps(desplazamientos, ensure_ascii=False),
+                    flush=True,
+                )
                 continue
 
             if accion == "siguiente":
@@ -97,7 +110,7 @@ def enviar_solicitud(
                 # preguntas cuando se intenta avanzar. Si LinkedIn bloquea el
                 # avance por un obligatorio, se escanean de nuevo esos campos
                 # antes de considerarlo un error definitivo.
-                page.wait_for_timeout(750)
+                page.wait_for_timeout(ESPERA_AVANCE_MS)
                 error_validacion = _obtener_error_validacion(page)
                 if error_validacion is not None:
                     rellenadas_despues_de_validacion = _rellenar_preguntas_visibles(
@@ -114,7 +127,8 @@ def enviar_solicitud(
                 continue
 
         raise FormularioEasyApplyError(
-            f"El formulario superó el máximo de {MAX_PASOS_FORMULARIO} pasos"
+            f"El formulario superó el máximo de {MAX_PASOS_FORMULARIO} pasos. "
+            f"Acciones detectadas: {', '.join(acciones_detectadas)}"
         )
     finally:
         context.close()
@@ -218,7 +232,7 @@ def _esperar_siguiente_accion(page):
         "siguiente": page.locator("button[data-easy-apply-next-button]").first,
     }
 
-    for _ in range(20):
+    for _ in range(INTENTOS_BUSQUEDA_ACCION):
         for nombre, boton in botones.items():
             if boton.is_visible():
                 return nombre, boton
@@ -229,7 +243,47 @@ def _esperar_siguiente_accion(page):
     )
 
 
-def _desplazar_revision_hasta_final(page) -> None:
+def _imprimir_traza_paso_formulario(
+    page, numero_paso: int, accion: str, texto_boton: str
+) -> None:
+    """Registra el estado del modal para diagnosticar bucles de Easy Apply."""
+    progreso = page.locator("[role='progressbar']:visible, progress:visible").first
+    texto_progreso = None
+    if progreso.count() > 0:
+        texto_progreso = (
+            progreso.get_attribute("aria-valuetext")
+            or progreso.get_attribute("aria-valuenow")
+            or progreso.inner_text().strip()
+            or None
+        )
+
+    botones_envio = page.locator(
+        "button[data-easy-apply-submit-button], "
+        "button:has-text('Enviar solicitud'), "
+        "button:has-text('Submit application')"
+    )
+    visibles_envio = sum(
+        botones_envio.nth(indice).is_visible()
+        for indice in range(botones_envio.count())
+    )
+    print(
+        "Easy Apply paso: "
+        + json.dumps(
+            {
+                "paso": numero_paso,
+                "accion": accion,
+                "texto_boton": texto_boton,
+                "progreso": texto_progreso,
+                "botones_envio_detectados": botones_envio.count(),
+                "botones_envio_visibles": visibles_envio,
+            },
+            ensure_ascii=False,
+        ),
+        flush=True,
+    )
+
+
+def _desplazar_revision_hasta_final(page) -> list[dict]:
     """Desplaza los paneles con scroll del modal hasta mostrar el envío final.
 
     En la revisión de Easy Apply, LinkedIn puede dejar el botón de envío fuera
@@ -239,21 +293,29 @@ def _desplazar_revision_hasta_final(page) -> None:
         ".jobs-easy-apply-modal:visible, [role='dialog']:visible"
     )
     if modales.count() == 0:
-        return
+        return []
 
-    modales.last.evaluate(
+    desplazamientos = modales.last.evaluate(
         """modal => {
         const elementos = [modal, ...modal.querySelectorAll('*')];
+        const desplazamientos = [];
         for (const elemento of elementos) {
             const estilo = window.getComputedStyle(elemento);
             const tieneScrollVertical = /auto|scroll/.test(estilo.overflowY);
             if (tieneScrollVertical && elemento.scrollHeight > elemento.clientHeight) {
+                desplazamientos.push({
+                    clase: elemento.className,
+                    antes: elemento.scrollTop,
+                    maximo: elemento.scrollHeight - elemento.clientHeight
+                });
                 elemento.scrollTop = elemento.scrollHeight;
             }
         }
+        return desplazamientos;
         }"""
     )
-    page.wait_for_timeout(500)
+    page.wait_for_timeout(ESPERA_RENDERIZADO_MS)
+    return desplazamientos
 
 
 def _rellenar_preguntas_visibles(

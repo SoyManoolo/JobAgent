@@ -8,7 +8,7 @@ from scraper.browser import crear_navegador
 from scraper.linkedin.easy_apply_scraper import abrir_easy_apply
 
 
-MAX_PASOS_FORMULARIO = 12
+MAX_PASOS_FORMULARIO = 20
 
 
 class FormularioEasyApplyError(Exception):

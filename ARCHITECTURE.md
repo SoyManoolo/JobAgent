@@ -97,7 +97,7 @@ sequenceDiagram
     A-->>C: total, procesadas y errores
 ```
 
-La respuesta del modelo se valida para asegurar valores conocidos de perfil, idioma y seniority. Una oferta pasa a `descartada` si el idioma es `otro`, el perfil es `desconocido` o su `score_encaje` es inferior a 20. Un fallo durante el análisis deja la oferta en `error`.
+La respuesta del modelo se valida para asegurar valores conocidos de perfil, idioma y seniority. Una oferta pasa a `descartada` si el idioma es `otro`, el perfil es `desconocido` o su `score_encaje` es inferior a 35. Un fallo durante el análisis deja la oferta en `error`.
 
 ## Flujo de Easy Apply
 

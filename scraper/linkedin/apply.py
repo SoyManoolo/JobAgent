@@ -87,6 +87,8 @@ def enviar_solicitud(
 
             if accion == "revisar":
                 boton.click()
+                page.wait_for_timeout(500)
+                _desplazar_revision_hasta_final(page)
                 continue
 
             if accion == "siguiente":
@@ -225,6 +227,33 @@ def _esperar_siguiente_accion(page):
     raise FormularioEasyApplyError(
         "No se encontró un botón para continuar, revisar o enviar"
     )
+
+
+def _desplazar_revision_hasta_final(page) -> None:
+    """Desplaza los paneles con scroll del modal hasta mostrar el envío final.
+
+    En la revisión de Easy Apply, LinkedIn puede dejar el botón de envío fuera
+    del área visible del modal hasta que se recorre el resumen de la solicitud.
+    """
+    modales = page.locator(
+        ".jobs-easy-apply-modal:visible, [role='dialog']:visible"
+    )
+    if modales.count() == 0:
+        return
+
+    modales.last.evaluate(
+        """modal => {
+        const elementos = [modal, ...modal.querySelectorAll('*')];
+        for (const elemento of elementos) {
+            const estilo = window.getComputedStyle(elemento);
+            const tieneScrollVertical = /auto|scroll/.test(estilo.overflowY);
+            if (tieneScrollVertical && elemento.scrollHeight > elemento.clientHeight) {
+                elemento.scrollTop = elemento.scrollHeight;
+            }
+        }
+        }"""
+    )
+    page.wait_for_timeout(500)
 
 
 def _rellenar_preguntas_visibles(

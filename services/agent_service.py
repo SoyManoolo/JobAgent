@@ -223,7 +223,7 @@ def _analizar_oferta(db, oferta):
 
     if (
         resultado["idioma"] == "otro"
-        or resultado["score_encaje"] < 20
+        or resultado["score_encaje"] < 35
         or resultado["perfil_recomendado"] == "desconocido"
     ):
         estado_final = Estado.DESCARTADA

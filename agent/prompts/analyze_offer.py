@@ -49,10 +49,10 @@ Reglas de scoring:
 - Penaliza si la oferta no describe un puesto concreto.
 
 Rangos para score_encaje:
-- 0-19: no encaja; debe descartarse.
-- 20-39: encaje bajo; solo revisar si no hay mejores opciones.
-- 40-59: encaje medio; revisable pero con dudas claras.
-- 60-79: buen encaje; merece revisión.
+- 0-34: no encaja; debe descartarse.
+- 35-49: encaje bajo; solo revisar si no hay mejores opciones.
+- 50-64: encaje medio; revisable pero con dudas claras.
+- 65-79: buen encaje; merece revisión.
 - 80-100: encaje muy alto; prioridad.
 
 Reglas concretas:

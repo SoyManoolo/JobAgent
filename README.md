@@ -112,7 +112,7 @@ El catálogo resumido de endpoints y ejemplos está en [API.md](API.md).
 
 ## Roadmap
 
-- [ ] Integrar y documentar el repositorio independiente de JobAgent Dashboard.
+- [x] Integrar y documentar el repositorio independiente de JobAgent Dashboard.
 - [x] Rellenar automáticamente formularios Easy Apply revisados.
 - [x] Seleccionar el CV correspondiente ya subido a LinkedIn.
 - [ ] Subir un CV cuando no esté disponible en LinkedIn.

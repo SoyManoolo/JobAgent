@@ -4,20 +4,24 @@ from sqlalchemy.orm import Session
 from models.oferta import Estado, Oferta, PerfilRecomendado
 
 
+# Función para obtener estadísticas de ofertas de trabajo para el dashboard
 def obtener_stats(db: Session):
-    """Devuelve las agregaciones de ofertas necesarias para el dashboard."""
+    # Devuelve las agregaciones de ofertas necesarias para el dashboard
     query_base = db.query(Oferta).filter(Oferta.eliminado.is_(False))
 
+    # Calcula el total de ofertas, ofertas eliminadas y ofertas históricas
     total = query_base.count()
     total_eliminadas = db.query(Oferta).filter(Oferta.eliminado.is_(True)).count()
     total_historico = total + total_eliminadas
 
+    # Calcula la cantidad de ofertas por estado
     estados = {estado.value: 0 for estado in Estado}
     for estado, cantidad in query_base.with_entities(
         Oferta.estado, func.count(Oferta.id)
     ).group_by(Oferta.estado):
         estados[estado.value] = cantidad
 
+    # Calcula la cantidad de ofertas por perfil recomendado
     perfiles = {
         PerfilRecomendado.BACKEND.value: 0,
         PerfilRecomendado.IA.value: 0,
@@ -30,6 +34,7 @@ def obtener_stats(db: Session):
         clave = perfil.value if perfil is not None else "sin_clasificar"
         perfiles[clave] = cantidad
 
+    # Calcula la cantidad de ofertas por plataforma
     plataformas = {
         plataforma: cantidad
         for plataforma, cantidad in query_base.with_entities(
@@ -37,6 +42,7 @@ def obtener_stats(db: Session):
         ).group_by(Oferta.plataforma)
     }
 
+    # Calcula estadísticas relacionadas con el score de encaje de las ofertas
     query_scores = query_base.filter(Oferta.score_encaje.is_not(None))
     total_scores, score_medio, score_minimo, score_maximo = query_scores.with_entities(
         func.count(Oferta.id),
@@ -45,6 +51,7 @@ def obtener_stats(db: Session):
         func.max(Oferta.score_encaje),
     ).one()
 
+    # Calcula la cantidad de ofertas por rangos de score de encaje
     rangos_score = {
         "0_19": query_scores.filter(Oferta.score_encaje.between(0, 19)).count(),
         "20_39": query_scores.filter(Oferta.score_encaje.between(20, 39)).count(),
@@ -53,6 +60,7 @@ def obtener_stats(db: Session):
         "80_100": query_scores.filter(Oferta.score_encaje.between(80, 100)).count(),
     }
 
+    # Calcula la cantidad de ofertas prioritarias, que son aquellas con estado ANALIZADA, PENDIENTE_RESPUESTAS o LISTA_PARA_APLICAR y con score_encaje mayor o igual a 70
     ofertas_prioritarias = query_base.filter(
         Oferta.estado.in_(
             [

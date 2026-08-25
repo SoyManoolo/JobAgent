@@ -19,12 +19,14 @@ class Estado(str, PyEnum):
     ERROR = "error"  # fallo en scraping / IA / parseo
 
 
+# Perfiles recomendados por la IA para la oferta
 class PerfilRecomendado(str, PyEnum):
     BACKEND = "backend"
     IA = "ia"
     DESCONOCIDO = "desconocido"
 
 
+# Modelo de la oferta de trabajo
 class Oferta(Base):
     __tablename__ = "ofertas"
 

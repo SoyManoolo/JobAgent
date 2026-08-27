@@ -1,5 +1,7 @@
 from browser import crear_navegador
 
+# Codigo de prueba para verificar la funcionalidad del navegador y la interacción con la página web
+
 playwright, browser, context, page = crear_navegador()
 
 page.goto(

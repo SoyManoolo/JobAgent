@@ -14,6 +14,7 @@ EASY_APPLY_SELECTOR = (
 )
 
 
+# Función que abre el modal de Easy Apply en LinkedIn utilizando un selector común para todas las ofertas que permiten la solicitud sencilla
 def abrir_easy_apply(page) -> None:
     """Abre el modal de Easy Apply usando el selector común de LinkedIn."""
     easy_apply = page.locator(EASY_APPLY_SELECTOR).first
@@ -28,6 +29,7 @@ def abrir_easy_apply(page) -> None:
     easy_apply.click()
 
 
+# Función que extrae las preguntas de una oferta de trabajo en LinkedIn utilizando Playwright
 def extraer_preguntas(link: str) -> list[dict]:
     playwright, _, context, page = crear_navegador(
         persistent=True,
@@ -75,6 +77,7 @@ def extraer_preguntas(link: str) -> list[dict]:
         playwright.stop()
 
 
+# Función que avanza un paso en el proceso de solicitud de LinkedIn o indica que la solicitud ya está lista para revisión/envío, sin hacer clic en los botones de revisión o envío
 def avanzar_paso_o_detectar_final(page) -> bool:
     """Avanza un paso o indica que la solicitud ya está lista para revisar/enviar.
 
@@ -109,6 +112,7 @@ def avanzar_paso_o_detectar_final(page) -> bool:
     return True
 
 
+# Función que extrae las preguntas de un paso del proceso de solicitud de LinkedIn, incluyendo preguntas de texto, selección múltiple y botones de opción
 def extraer_preguntas_paso(page) -> list[dict]:
     preguntas = []
 
@@ -119,6 +123,7 @@ def extraer_preguntas_paso(page) -> list[dict]:
         flush=True,
     )
 
+    # Bucle que recorre cada elemento del formulario en el paso actual y extrae la información relevante de las preguntas, como el texto, el tipo, si es obligatoria y las opciones disponibles
     for i in range(elementos.count()):
         elemento = elementos.nth(i)
 
@@ -158,6 +163,7 @@ def extraer_preguntas_paso(page) -> list[dict]:
             '[data-test-form-builder-radio-button-form-component="true"]'
         )
 
+        # Si se encuentra un componente de botones de opción, se extraen las opciones disponibles y se construye la pregunta correspondiente con su texto, tipo, obligatoriedad y selector temporal
         if componente_radio.count() > 0:
             titulo = componente_radio.locator(
                 "[data-test-form-builder-radio-button-form-component__title]"
@@ -167,6 +173,7 @@ def extraer_preguntas_paso(page) -> list[dict]:
 
             opciones = []
 
+            # Bucle que recorre cada opción de un grupo de botones de opción y extrae el texto y el valor de cada opción para construir la lista de opciones disponibles en la pregunta
             for j in range(opciones_locator.count()):
                 opcion = opciones_locator.nth(j)
 
@@ -207,6 +214,7 @@ def extraer_preguntas_paso(page) -> list[dict]:
             "[data-test-text-entity-list-form-component]"
         )
 
+        # Si se encuentra un componente de selección, se extraen las opciones disponibles y se construye la pregunta correspondiente con su texto, tipo, obligatoriedad y selector temporal
         if componente_select.count() > 0:
             label = componente_select.locator("label").first
             select_element = componente_select.locator("select").first

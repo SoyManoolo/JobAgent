@@ -7,21 +7,25 @@ from playwright.sync_api import Error as PlaywrightError
 from scraper.browser import crear_navegador
 from scraper.utils import obtener_texto
 
-
+# Numero maximo de ofertas a extraer por busqueda
 MAX_OFERTAS = 200
 
 
+# Funcion que extrae ofertas de trabajo de LinkedIn utilizando Playwright
 def extraer_ofertas(busqueda: str) -> list[dict]:
     ofertas_extraidas = []
     ids_vistos = set()
 
+    # Crear un navegador web con Playwright en modo persistente para mantener la sesión y las cookies entre ejecuciones
     playwright, _, context, page = crear_navegador(persistent=True)
 
     try:
+        # Construir la URL de búsqueda de LinkedIn con los parámetros de búsqueda proporcionados
         parametros = urlencode({"keywords": busqueda})
         url = f"https://www.linkedin.com/jobs/search/?{parametros}"
 
         try:
+            # Navegar a la URL de búsqueda de LinkedIn y esperar a que se cargue el contenido del DOM
             page.goto(
                 url,
                 wait_until="domcontentloaded",
@@ -32,6 +36,7 @@ def extraer_ofertas(busqueda: str) -> list[dict]:
                 f"LinkedIn rechazó la búsqueda '{busqueda}': {error}"
             ) from error
 
+        # Esperar a que la primera oferta de trabajo esté visible en la página antes de continuar con la extracción
         page.locator(".job-card-container").first.wait_for(
             state="visible",
             timeout=60_000,
@@ -39,6 +44,7 @@ def extraer_ofertas(busqueda: str) -> list[dict]:
 
         ultimo_total = 0
 
+        # Bucle que desplaza la página hacia abajo para cargar más ofertas de trabajo hasta alcanzar el número máximo de ofertas o hasta que no se carguen más ofertas nuevas
         while True:
             ofertas = page.locator(".job-card-container")
             total = ofertas.count()
@@ -79,6 +85,7 @@ def extraer_ofertas(busqueda: str) -> list[dict]:
             flush=True,
         )
 
+        # Bucle que recorre cada oferta de trabajo encontrada en la página y extrae la información relevante, como el título, la empresa, la ubicación, el salario, la descripción y el enlace a la oferta
         for i in range(total):
             try:
                 oferta = ofertas.nth(i)

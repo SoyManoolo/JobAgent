@@ -15,6 +15,7 @@ ESPERA_AVANCE_MS = 1_500
 INTENTOS_BUSQUEDA_ACCION = 40
 
 
+# Excepciones personalizadas para manejar errores específicos durante el proceso de solicitud de LinkedIn
 class FormularioEasyApplyError(Exception):
     """El formulario no coincide con las preguntas y respuestas guardadas."""
 
@@ -22,7 +23,7 @@ class FormularioEasyApplyError(Exception):
 class EnvioNoConfirmadoError(Exception):
     """LinkedIn no confirmó el envío después de pulsar el botón final."""
 
-
+# Función que envía una solicitud de trabajo en LinkedIn utilizando Playwright, rellenando las preguntas del formulario con las respuestas proporcionadas y seleccionando el currículum
 def enviar_solicitud(
     link: str,
     preguntas: list[dict],
@@ -337,6 +338,7 @@ def _desplazar_revision_hasta_final(page) -> list[dict]:
     return desplazamientos
 
 
+# Funcion para rellenar las preguntas visibles en el formulario de LinkedIn, utilizando las respuestas proporcionadas y marcando las preguntas que se han utilizado para evitar duplicados
 def _rellenar_preguntas_visibles(
     page,
     preguntas: list[dict],
@@ -347,6 +349,7 @@ def _rellenar_preguntas_visibles(
     rellenadas = 0
     elementos = page.locator("[data-test-form-element]")
 
+    #  Bucle que recorre cada elemento del formulario, su pregunta y su tipo, y rellena la respuesta correspondiente si está disponible
     for indice in range(elementos.count()):
         elemento = elementos.nth(indice)
 
@@ -426,7 +429,7 @@ def _rellenar_preguntas_visibles(
         preguntas_utilizadas,
     )
 
-
+# Función que rellena preguntas del formulario de LinkedIn basándose en las etiquetas visibles, útil para campos que LinkedIn renderiza fuera del contenedor esperado
 def _rellenar_por_etiqueta(
     page,
     preguntas: list[dict],
@@ -467,6 +470,7 @@ def _rellenar_por_etiqueta(
     return rellenadas
 
 
+# Función que busca el identificador de una pregunta en base a su ID o texto, utilizando un diccionario de respuestas y otro de preguntas normalizadas para facilitar la coincidencia
 def _buscar_pregunta_id(
     identificador: str | None,
     texto: str,
@@ -478,6 +482,7 @@ def _buscar_pregunta_id(
     return preguntas_por_texto.get(_normalizar_texto(texto))
 
 
+# Función que selecciona un botón de opción en un grupo de botones de opción, verificando que el valor proporcionado coincida con una opción disponible y que LinkedIn confirme la selección
 def _seleccionar_radio(componente, valor: str) -> None:
     opciones = componente.locator('input[type="radio"]')
     for indice in range(opciones.count()):
@@ -503,6 +508,7 @@ def _seleccionar_radio(componente, valor: str) -> None:
     )
 
 
+# Función que valida que todas las preguntas obligatorias de un formulario tengan respuestas revisadas antes de enviar la solicitud
 def _validar_preguntas_obligatorias(
     preguntas: list[dict],
     respuestas_por_id: dict[str, dict],
@@ -559,6 +565,7 @@ def _obtener_error_validacion(page) -> str | None:
     return f"LinkedIn rechazó el campo '{identificador}': {mensaje}"
 
 
+# Función que espera a que LinkedIn confirme el envío de la solicitud, buscando un mensaje de confirmación visible en la página
 def _esperar_confirmacion_envio(page) -> None:
     confirmacion = page.get_by_text(
         re.compile(
@@ -575,6 +582,7 @@ def _esperar_confirmacion_envio(page) -> None:
         ) from error
 
 
+# Función que detecta si la solicitud ya fue enviada previamente, buscando un indicador visible en la página de LinkedIn
 def _solicitud_ya_enviada(page) -> bool:
     indicador = page.get_by_text(
         re.compile(r"solicitud enviada|application submitted|applied", re.IGNORECASE)
@@ -582,6 +590,7 @@ def _solicitud_ya_enviada(page) -> bool:
     return indicador.is_visible()
 
 
+# Función que normaliza un texto eliminando acentos, convirtiendo a minúsculas y reemplazando caracteres no alfanuméricos por espacios, para facilitar la comparación de preguntas y respuestas en el formulario de LinkedIn
 def _normalizar_texto(texto: str) -> str:
     texto_sin_acentos = "".join(
         caracter

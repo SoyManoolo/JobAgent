@@ -12,6 +12,7 @@ from agent.prompts.cv import obtener_cv
 from services.oferta_service import marcar_error_oferta
 
 
+# Clases de error específicas para el servicio de agente, que se utilizan para manejar situaciones particulares durante el procesamiento de ofertas y respuestas de formularios.
 class RespuestaFormularioError(ValueError):
     pass
 
@@ -32,18 +33,22 @@ class OllamaEnUsoError(RuntimeError):
     """Otra operación ya está usando Ollama."""
 
 
+# Bloqueos para evitar concurrencia en el análisis de ofertas y en el uso de Ollama.
 _bloqueo_analisis = Lock()
 _bloqueo_ollama = Lock()
 
 
+# Funcion auxiliar para adquirir el bloqueo de análisis, lanzando un error si ya hay un análisis en curso.
 def _adquirir_bloqueo_analisis() -> None:
     if not _bloqueo_analisis.acquire(blocking=False):
         raise AnalisisEnCursoError("Ya hay un análisis de ofertas en curso")
 
 
+# Decorador que asegura que solo una operación pueda usar Ollama a la vez, lanzando un error si Ollama ya está en uso.
 def _requiere_ollama(funcion):
     """Evita inferencias concurrentes contra la única instancia de Ollama."""
     @wraps(funcion)
+    # Función envuelta que intenta adquirir el bloqueo de Ollama antes de ejecutar la función decorada, y lo libera después de la ejecución.
     def envuelta(*args, **kwargs):
         if not _bloqueo_ollama.acquire(blocking=False):
             raise OllamaEnUsoError("Ollama ya está procesando otra tarea")
@@ -55,9 +60,11 @@ def _requiere_ollama(funcion):
     return envuelta
 
 
+# Decorador que marca un error en la oferta si ocurre una excepción durante la generación de respuestas, permitiendo la revisión manual posterior.
 def _marca_error_respuestas(funcion):
     """Registra el fallo de una generación individual para revisión manual."""
     @wraps(funcion)
+    # Funcion envuelta que marca la oferta como error si ocurre una excepción durante la ejecución de la función decorada, y luego propaga la excepción.
     def envuelta(id: str, *args, **kwargs):
         try:
             return funcion(id, *args, **kwargs)
@@ -70,6 +77,7 @@ def _marca_error_respuestas(funcion):
     return envuelta
 
 
+# Función que normaliza las respuestas del LLM asociándolas con los IDs de las preguntas persistidas, asegurando que el formato sea consistente y válido.
 def normalizar_respuestas_formulario(
     preguntas: list[dict], resultado: dict
 ) -> dict:
@@ -80,6 +88,8 @@ def normalizar_respuestas_formulario(
     y también normaliza el texto de las opciones seleccionadas.
     """
     respuestas = resultado.get("respuestas")
+
+    # Se valida que el resultado del LLM contenga una lista de respuestas y que la cantidad de respuestas coincida con la cantidad de preguntas, lanzando errores si no se cumplen estas condiciones.
     if not isinstance(respuestas, list):
         raise ValueError("El resultado del LLM no contiene una lista de respuestas")
     if len(respuestas) != len(preguntas):
@@ -87,11 +97,13 @@ def normalizar_respuestas_formulario(
             "El número de respuestas del LLM no coincide con las preguntas"
         )
 
+    # Se normalizan las respuestas, asociando cada respuesta con su pregunta correspondiente y ajustando el contenido según el tipo de pregunta, asegurando que las respuestas sean consistentes y válidas.
     respuestas_normalizadas = []
     for pregunta, respuesta in zip(preguntas, respuestas):
         if not isinstance(respuesta, dict):
             raise ValueError("Cada respuesta del LLM debe ser un objeto JSON")
 
+        # Se crea un diccionario normalizado para cada respuesta, asegurando que contenga los campos necesarios y ajustando el contenido según el tipo de pregunta, especialmente para preguntas de selección.
         normalizada = {
             "pregunta_id": pregunta["pregunta_id"],
             "respuesta": respuesta.get("respuesta"),
@@ -99,6 +111,7 @@ def normalizar_respuestas_formulario(
             "informacion_suficiente": respuesta.get("informacion_suficiente"),
         }
 
+        # Para preguntas de tipo "radio" o "select", si la información es suficiente, se busca la opción correspondiente y se actualiza el campo "respuesta" con el texto de la opción seleccionada.
         if (
             pregunta["tipo"] in {"radio", "select"}
             and normalizada["informacion_suficiente"] is True
@@ -119,6 +132,7 @@ def normalizar_respuestas_formulario(
     return {"respuestas": respuestas_normalizadas}
 
 
+# Función auxiliar que imprime información detallada sobre un error de validación de respuesta, incluyendo el motivo del error y los detalles de la pregunta y la respuesta involucradas, para facilitar el diagnóstico.
 def _imprimir_error_validacion_respuesta(
     pregunta: dict, respuesta: dict, motivo: str
 ) -> None:
@@ -144,6 +158,7 @@ def _imprimir_error_validacion_respuesta(
     )
 
 
+# Función que valida las respuestas del formulario, asegurando que todas las preguntas obligatorias estén resueltas y que las respuestas cumplan con los requisitos de formato y contenido según el tipo de pregunta, lanzando errores si se detectan inconsistencias.
 def validar_respuestas_formulario(
     preguntas: list[dict], resultado: dict
 ) -> bool:
@@ -217,6 +232,7 @@ def validar_respuestas_formulario(
     return todas_obligatorias_resueltas
 
 
+# Función que analiza una oferta y persiste el resultado de la clasificación, determinando el estado final de la oferta según los criterios de idioma, score de encaje y perfil recomendado, y actualizando los datos relevantes en la base de datos.
 def _analizar_oferta(db, oferta):
     """Analiza una oferta y persiste el resultado de la clasificación."""
     resultado = llm.analizar_oferta(oferta.descripcion)
@@ -245,6 +261,7 @@ def _analizar_oferta(db, oferta):
     return oferta_repository.modificar_datos_oferta(db, oferta.id, datos_actualizar)
 
 
+# Función que procesa una única oferta activa identificada por su UUID, analizando su contenido y actualizando su estado en la base de datos. Si el análisis falla, la oferta queda marcada como error y se propaga la excepción para que la ruta responda con un error HTTP.
 @_requiere_ollama
 def procesar_oferta(id: str):
     """Analiza una única oferta activa identificada por su UUID.
@@ -252,6 +269,8 @@ def procesar_oferta(id: str):
     Si el análisis falla, la oferta queda marcada como ``error`` y se propaga
     la excepción para que la ruta responda con un error HTTP.
     """
+
+    # Se adquiere un bloqueo para evitar que se realicen análisis concurrentes de ofertas, garantizando que solo una operación de análisis esté en curso a la vez.
     _adquirir_bloqueo_analisis()
     try:
         with SessionLocal() as db:
@@ -269,6 +288,7 @@ def procesar_oferta(id: str):
         _bloqueo_analisis.release()
 
 
+# Función que procesa todas las ofertas extraídas, analizando su contenido y actualizando su estado en la base de datos. Devuelve un resumen del total de ofertas procesadas, cuántas fueron procesadas con éxito y cuántas tuvieron errores.
 @_requiere_ollama
 def procesar_ofertas_extraidas(limite: int = 25):
     _adquirir_bloqueo_analisis()
@@ -296,6 +316,7 @@ def procesar_ofertas_extraidas(limite: int = 25):
         _bloqueo_analisis.release()
 
 
+# Función que responde a las preguntas de un formulario asociado a una oferta, utilizando el LLM para generar respuestas basadas en la descripción de la oferta y el CV correspondiente al perfil recomendado e idioma de la oferta. Si ocurre un error durante la generación de respuestas, la oferta queda marcada como error para revisión manual.
 @_requiere_ollama
 @_marca_error_respuestas
 def responder_preguntas_oferta(id: str):
@@ -304,6 +325,7 @@ def responder_preguntas_oferta(id: str):
         if not oferta:
             return None
 
+        # Se obtiene el CV correspondiente al perfil recomendado y el idioma de la oferta.
         try:
             cv = obtener_cv(
                 oferta.perfil_recomendado.value,
@@ -318,6 +340,7 @@ def responder_preguntas_oferta(id: str):
         descripcion = oferta.descripcion
         preguntas = oferta.preguntas_formulario
 
+    # Se llama al LLM para generar respuestas a las preguntas del formulario, pasando la descripción de la oferta, el CV y las preguntas.
     try:
         respuestas = llm.responder_preguntas_oferta(
             descripcion,
@@ -355,6 +378,7 @@ def responder_preguntas_oferta(id: str):
         )
         raise RespuestaOllamaInvalidaError(str(error)) from error
 
+    # Se determina el estado final de la oferta según si todas las preguntas obligatorias fueron resueltas, y se actualizan los datos de la oferta en la base de datos.
     estado_final = (
         Estado.LISTA_PARA_APLICAR
         if todas_obligatorias_resueltas
@@ -376,6 +400,7 @@ def responder_preguntas_oferta(id: str):
     return {"respuestas": respuestas, "estado": estado_final.value}
 
 
+# Función que responde a las preguntas de todos los formularios asociados a ofertas pendientes de respuestas, utilizando el LLM para generar respuestas basadas en la descripción de cada oferta y el CV correspondiente al perfil recomendado e idioma de la oferta. Devuelve un resumen del total de ofertas procesadas, cuántas fueron procesadas con éxito y cuántas tuvieron errores.
 @_requiere_ollama
 def responder_preguntas_ofertas(limite: int = 5):
     with SessionLocal() as db:

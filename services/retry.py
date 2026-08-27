@@ -12,6 +12,7 @@ DEFAULT_RETRY_ATTEMPTS = max(1, int(os.getenv("RETRY_ATTEMPTS", "3")))
 RETRY_DELAY_SECONDS = max(0, float(os.getenv("RETRY_DELAY_SECONDS", "1")))
 
 
+### Función que ejecuta una operación y vuelve a intentarla si falla temporalmente, hasta un número máximo de intentos. Se puede especificar un conjunto de excepciones que no deben reintentarse.
 def ejecutar_con_reintentos(
     operacion: Callable[[], T],
     descripcion: str,

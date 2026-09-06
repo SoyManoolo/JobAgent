@@ -15,7 +15,7 @@ La interfaz visual se desarrolla en un repositorio independiente y consume los e
 - Extrae hasta 200 ofertas de LinkedIn por búsqueda mediante Playwright y una sesión persistente.
 - Evita duplicados por identificador de plataforma o por combinación empresa/título.
 - Analiza las ofertas con Ollama: idioma, seniority, perfil recomendado, puntuaciones y explicación de encaje.
-- Descarta automáticamente ofertas fuera de idioma, sin perfil reconocido o con un encaje inferior a 20.
+- Descarta automáticamente ofertas fuera de idioma, sin perfil reconocido o con un encaje inferior a 35.
 - Extrae las preguntas de LinkedIn Easy Apply y genera respuestas propuestas basadas en el CV.
 - Valida que las preguntas obligatorias estén resueltas antes de marcar una oferta como lista para aplicar.
 - Expone filtros, paginación, notas y métricas para un dashboard: embudo por estado, prioridades, encaje, Easy Apply, perfiles y plataformas.
@@ -108,7 +108,7 @@ El catálogo resumido de endpoints y ejemplos está en [API.md](API.md).
 2. El agente las analiza con Ollama y las marca como `analizada` o `descartada`.
 3. Para las ofertas analizadas con Solicitud sencilla, se extraen las preguntas; quedan `pendientes_respuestas` o `lista_para_aplicar` si no hay preguntas.
 4. El agente prepara las respuestas usando el CV adecuado. Si resuelve todas las obligatorias, deja la oferta en `lista_para_aplicar`; en caso contrario permanece en `pendientes_respuestas` para completarla manualmente.
-5. La persona inicia el envío manualmente desde el dashboard o API. Playwright completa Easy Apply, elige el CV privado configurado y sólo marca la oferta como `aplicada` si LinkedIn confirma el envío.
+5. La persona decide enviar la candidatura mediante el botón de envío del dashboard o la llamada equivalente a la API. Tras esa acción explícita, Playwright completa Easy Apply, elige el CV privado configurado y envía la solicitud; sólo la marca como `aplicada` si LinkedIn confirma el envío.
 
 ## Roadmap
 

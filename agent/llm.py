@@ -149,18 +149,23 @@ def _responder_preguntas_oferta(
     # Verifica si la respuesta fue exitosa, si no, lanza una excepción
     response.raise_for_status()
 
-    raw = response.json()
-    contenido = raw["message"]["content"]
+    try:
+        raw = response.json()
+        contenido = raw["message"]["content"]
+        resultado = json.loads(contenido)
+        if not isinstance(resultado, dict):
+            raise TypeError("El resultado de Ollama debe ser un objeto JSON")
+    except (ValueError, KeyError, TypeError) as error:
+        print(
+            "operacion=generar_respuestas resultado=invalido "
+            f"tipo_error={type(error).__name__}",
+            flush=True,
+        )
+        raise
 
-    # Muestra la respuesta bruta de Ollama y el contenido procesado para depuración
     print(
-        "Respuesta bruta de Ollama al generar respuestas: "
-        + json.dumps(raw, ensure_ascii=False, default=str),
+        "operacion=generar_respuestas resultado=recibido "
+        f"numero_preguntas={len(preguntas)}",
         flush=True,
     )
-    print(
-        f"Contenido de Ollama al generar respuestas: {contenido}",
-        flush=True,
-    )
-
-    return json.loads(contenido)
+    return resultado

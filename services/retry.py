@@ -33,7 +33,8 @@ def ejecutar_con_reintentos(
                 raise
 
             print(
-                f"Error en {descripcion} (intento {intento}/{intentos}): {error}. "
+                f"Error en {descripcion} (intento {intento}/{intentos}): "
+                f"{type(error).__name__}. "
                 "Reintentando...",
                 flush=True,
             )

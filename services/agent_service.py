@@ -1,4 +1,3 @@
-import json
 from functools import wraps
 from threading import Lock
 
@@ -132,28 +131,14 @@ def normalizar_respuestas_formulario(
     return {"respuestas": respuestas_normalizadas}
 
 
-# Función auxiliar que imprime información detallada sobre un error de validación de respuesta, incluyendo el motivo del error y los detalles de la pregunta y la respuesta involucradas, para facilitar el diagnóstico.
+# Función auxiliar que registra el motivo y la posición sin incluir datos del formulario.
 def _imprimir_error_validacion_respuesta(
-    pregunta: dict, respuesta: dict, motivo: str
+    posicion: int, motivo: str
 ) -> None:
-    """Muestra el contexto mínimo necesario para diagnosticar una respuesta inválida."""
+    """Registra un fallo de validación sin preguntas ni respuestas personales."""
     print(
-        "Validación rechazada de respuesta de Ollama: "
-        + json.dumps(
-            {
-                "motivo": motivo,
-                "pregunta": {
-                    "pregunta_id": pregunta.get("pregunta_id"),
-                    "texto": pregunta.get("texto"),
-                    "tipo": pregunta.get("tipo"),
-                    "obligatoria": pregunta.get("obligatoria"),
-                    "opciones": pregunta.get("opciones"),
-                },
-                "respuesta_normalizada": respuesta,
-            },
-            ensure_ascii=False,
-            default=str,
-        ),
+        "operacion=generar_respuestas resultado=validacion_rechazada "
+        f"posicion={posicion} motivo={motivo}",
         flush=True,
     )
 
@@ -173,12 +158,12 @@ def validar_respuestas_formulario(
     }
     todas_obligatorias_resueltas = True
 
-    for respuesta in respuestas:
+    for posicion, respuesta in enumerate(respuestas):
         pregunta = preguntas_por_id[respuesta["pregunta_id"]]
 
         if not isinstance(respuesta.get("informacion_suficiente"), bool):
             _imprimir_error_validacion_respuesta(
-                pregunta, respuesta, "informacion_suficiente no es booleano"
+                posicion, "informacion_suficiente_no_booleano"
             )
             raise ValueError("informacion_suficiente debe ser un booleano")
 
@@ -189,9 +174,7 @@ def validar_respuestas_formulario(
         if not informacion_suficiente:
             if texto_respuesta is not None or valor_seleccionado is not None:
                 _imprimir_error_validacion_respuesta(
-                    pregunta,
-                    respuesta,
-                    "informacion_suficiente=false con respuesta o valor_seleccionado no nulo",
+                    posicion, "respuesta_sin_informacion_no_nula",
                 )
                 raise ValueError(
                     "Una respuesta sin información suficiente debe contener valores nulos"
@@ -202,7 +185,7 @@ def validar_respuestas_formulario(
 
         if not isinstance(texto_respuesta, str) or not texto_respuesta.strip():
             _imprimir_error_validacion_respuesta(
-                pregunta, respuesta, "informacion_suficiente=true sin texto de respuesta"
+                posicion, "respuesta_suficiente_sin_texto"
             )
             raise ValueError("Una respuesta suficiente debe incluir texto")
 
@@ -210,20 +193,19 @@ def validar_respuestas_formulario(
             valores_opciones = {
                 opcion["valor"] for opcion in pregunta["opciones"]
             }
-            if valor_seleccionado not in valores_opciones:
+            if (
+                not isinstance(valor_seleccionado, str)
+                or valor_seleccionado not in valores_opciones
+            ):
                 _imprimir_error_validacion_respuesta(
-                    pregunta,
-                    respuesta,
-                    "valor_seleccionado no coincide con las opciones disponibles",
+                    posicion, "valor_seleccionado_invalido",
                 )
                 raise ValueError(
                     "valor_seleccionado no coincide con una opción de la pregunta"
                 )
         elif valor_seleccionado is not None:
             _imprimir_error_validacion_respuesta(
-                pregunta,
-                respuesta,
-                "pregunta de texto o número con valor_seleccionado no nulo",
+                posicion, "valor_seleccionado_en_pregunta_no_select",
             )
             raise ValueError(
                 "Las preguntas de texto o número no deben tener valor_seleccionado"
@@ -349,15 +331,17 @@ def responder_preguntas_oferta(id: str):
         )
     except requests.RequestException as error:
         print(
-            f"Ollama no respondió al generar respuestas para {id}: {error}",
+            "operacion=generar_respuestas resultado=sin_respuesta "
+            f"oferta_id={id} tipo_error={type(error).__name__}",
             flush=True,
         )
         raise OllamaNoDisponibleError(
             "Ollama no respondió después de los reintentos"
         ) from error
-    except (json.JSONDecodeError, KeyError, TypeError) as error:
+    except (ValueError, KeyError, TypeError) as error:
         print(
-            f"Ollama devolvió una respuesta no válida para {id}: {error}",
+            "operacion=generar_respuestas resultado=invalido "
+            f"tipo_error={type(error).__name__}",
             flush=True,
         )
         raise RespuestaOllamaInvalidaError(
@@ -372,8 +356,7 @@ def responder_preguntas_oferta(id: str):
         )
     except ValueError as error:
         print(
-            "Respuesta de Ollama rechazada para la oferta "
-            f"{id}: {error}",
+            f"operacion=generar_respuestas resultado=validacion_rechazada oferta_id={id}",
             flush=True,
         )
         raise RespuestaOllamaInvalidaError(str(error)) from error
@@ -443,7 +426,11 @@ def responder_preguntas_ofertas(limite: int = 5):
                     },
                 )
             except Exception as e:
-                print(f"Error respondiendo preguntas para la oferta {oferta.id}: {e}")
+                print(
+                    "operacion=generar_respuestas resultado=error "
+                    f"oferta_id={oferta.id} tipo_error={type(e).__name__}",
+                    flush=True,
+                )
                 marcar_error_oferta(db, oferta.id)
                 errores += 1
             continue

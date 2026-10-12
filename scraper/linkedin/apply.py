@@ -7,6 +7,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from scraper.browser import crear_navegador
 from scraper.linkedin.easy_apply_scraper import abrir_easy_apply
+from scraper.linkedin.url import validar_url_oferta_linkedin
 
 
 MAX_PASOS_FORMULARIO = 20
@@ -31,15 +32,18 @@ def enviar_solicitud(
     nombre_cv: str,
 ) -> dict:
     """Rellena y envía una solicitud Easy Apply previamente revisada."""
+    link = validar_url_oferta_linkedin(link)
     playwright, _, context, page = crear_navegador(persistent=True)
 
     try:
         try:
-            page.goto(link, wait_until="domcontentloaded", timeout=60_000)
-        except PlaywrightError as error:
-            raise RuntimeError(
-                f"LinkedIn rechazó la navegación a '{link}': {error}"
-            ) from error
+            page.goto(
+                validar_url_oferta_linkedin(link),
+                wait_until="domcontentloaded",
+                timeout=60_000,
+            )
+        except PlaywrightError:
+            raise RuntimeError("LinkedIn rechazó la navegación a la oferta") from None
 
         if _solicitud_ya_enviada(page):
             return {

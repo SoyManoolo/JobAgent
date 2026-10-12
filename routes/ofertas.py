@@ -61,7 +61,10 @@ def confirmar_respuestas_formulario(id: str):
 
 @router.patch("/{id}", status_code=status.HTTP_200_OK)
 def modificar_datos_oferta(id: str, datos: dict):
-    oferta = oferta_service.modificar_oferta(id, datos)
+    try:
+        oferta = oferta_service.modificar_oferta(id, datos)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
     if not oferta:
         raise HTTPException(status_code=404, detail="Oferta no encontrada")
 

@@ -2,6 +2,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from scraper.browser import crear_navegador
+from scraper.linkedin.url import validar_url_oferta_linkedin
 
 
 class SolicitudNoDisponibleError(Exception):
@@ -31,6 +32,7 @@ def abrir_easy_apply(page) -> None:
 
 # Función que extrae las preguntas de una oferta de trabajo en LinkedIn utilizando Playwright
 def extraer_preguntas(link: str) -> list[dict]:
+    link = validar_url_oferta_linkedin(link)
     playwright, _, context, page = crear_navegador(
         persistent=True,
     )
@@ -38,14 +40,12 @@ def extraer_preguntas(link: str) -> list[dict]:
     try:
         try:
             page.goto(
-                link,
+                validar_url_oferta_linkedin(link),
                 wait_until="domcontentloaded",
                 timeout=60_000,
             )
-        except PlaywrightError as error:
-            raise RuntimeError(
-                f"LinkedIn rechazó la navegación a '{link}': {error}"
-            ) from error
+        except PlaywrightError:
+            raise RuntimeError("LinkedIn rechazó la navegación a la oferta") from None
 
         abrir_easy_apply(page)
 

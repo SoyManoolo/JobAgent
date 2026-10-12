@@ -11,7 +11,7 @@ flowchart TB
     F --> R[Routes]
     R --> SV[Services]
     SV --> RP[Repositories]
-    RP --> DB[(SQLite\njobagent.sqlite)]
+    RP --> DB[(SQLite\ndata/jobagent.sqlite)]
     SV --> P[Playwright\nChromium persistente]
     P --> LI[LinkedIn]
     SV --> O[Ollama\nAPI de chat]
@@ -47,7 +47,7 @@ La documentación OpenAPI generada está disponible en `/docs`. [API.md](API.md)
 
 ## Persistencia actual y evolución prevista
 
-La configuración actual usa `sqlite:///jobagent.sqlite`. Es una elección pragmática para ejecución local: no requiere servidor y permite iniciar el proyecto con `python init_db.py`.
+La configuración actual guarda SQLite en `data/jobagent.sqlite`, dentro del directorio que contiene `database.py`. La URL SQLite se construye con la ruta absoluta de ese archivo (`DATA_DIR / 'jobagent.sqlite'`). Es una elección pragmática para ejecución local: no requiere servidor y permite iniciar el proyecto con `python init_db.py`.
 
 La tabla `ofertas` reúne los datos extraídos, estado del flujo, resultados de IA y datos del formulario. Los valores de `preguntas_formulario`, `respuestas_formulario` y `keywords` se almacenan como JSON. El borrado es lógico mediante `eliminado`, por lo que las consultas de listado y estadísticas excluyen esos registros. Para ofertas cerradas durante Easy Apply es una solución temporal; en una evolución posterior convendrá diferenciar explícitamente una oferta cerrada de un registro eliminado por el usuario.
 

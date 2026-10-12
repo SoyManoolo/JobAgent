@@ -3,6 +3,7 @@ from models.oferta import Estado, Oferta, PerfilRecomendado
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 import uuid
+from scraper.linkedin.url import validar_url_oferta_linkedin
 
 
 # Función para obtener una oferta por su ID
@@ -59,6 +60,8 @@ def guardar_ofertas(db: Session, ofertas):
                 continue
 
             datos = oferta.copy()
+            if datos["plataforma"].lower() == "linkedin":
+                datos["url"] = validar_url_oferta_linkedin(datos["url"])
 
             datos["id"] = str(uuid.uuid4())
             datos["estado"] = Estado.EXTRAIDA
@@ -94,6 +97,11 @@ def modificar_datos_oferta(db: Session, id: str, datos: dict):
 
     if not oferta:
         return None
+
+    if ("url" in datos or "plataforma" in datos) and datos.get(
+        "plataforma", oferta.plataforma
+    ).lower() == "linkedin":
+        validar_url_oferta_linkedin(datos.get("url", oferta.url))
 
     # Modifica los atributos de la oferta con los datos proporcionados
     for clave, valor in datos.items():

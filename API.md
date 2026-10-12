@@ -120,13 +120,13 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/scraper/linkedin/easyapply/aplicar/bf
 }
 ```
 
-Tras detectar la confirmación de LinkedIn, guarda el estado `aplicada` y `fecha_aplicacion`. Si LinkedIn ya muestra la solicitud como enviada, sincroniza igualmente el estado local.
+Si LinkedIn ya muestra la solicitud como enviada, no pulsa Enviar: devuelve `ya_enviada: true` y sincroniza el estado local `aplicada` y `fecha_aplicacion`. En caso contrario, rellena el formulario, pulsa Enviar y guarda esos datos tras detectar la confirmación de LinkedIn.
 
 - `404`: la oferta no existe o está eliminada.
 - `409`: la oferta no es de LinkedIn Easy Apply, no está lista para aplicar o tiene respuestas obligatorias incompletas.
 - `500`: el formulario cambió, LinkedIn rechazó algún campo o no se pudo confirmar el envío.
 
-Este endpoint realiza el envío real de la candidatura. No aplica reintentos automáticos sobre la operación completa para evitar solicitudes duplicadas después de un resultado ambiguo.
+La llamada explícita `POST /api/v1/scraper/linkedin/easyapply/aplicar/{id}` es la acción que realiza el envío real de la candidatura; las rutas de extracción de preguntas y preparación de respuestas no envían solicitudes. No aplica reintentos automáticos sobre la operación completa para evitar solicitudes duplicadas después de un resultado ambiguo.
 
 Rellena campos `text`, `number`, `radio` y `select`, y selecciona explícitamente el CV configurado para el `perfil_recomendado` e `idioma_oferta`. Los nombres de los documentos de LinkedIn se definen de forma privada en `agent/prompts/cv.py`, mediante `CVS_LINKEDIN`; consulta `cv.example.py` como plantilla. Si no hay una configuración correspondiente, devuelve `409` y no envía la solicitud. La subida de CV y otros tipos de campo quedan pendientes de incorporar.
 

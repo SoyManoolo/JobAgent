@@ -39,7 +39,7 @@ El dashboard se desarrolla en un repositorio independiente, no incluido en esta 
 La aplicación se crea en `main.py` y registra cuatro routers bajo el prefijo común `/api/v1`:
 
 - `ofertas`: listado, filtros, detalle, modificación y borrado lógico.
-- `scraper`: extracción de LinkedIn y detección de preguntas Easy Apply.
+- `scraper`: extracción de LinkedIn, detección de preguntas Easy Apply y envío explícito de solicitudes revisadas.
 - `agent`: análisis con IA y generación de respuestas.
 - `dashboard`: métricas agregadas y notas.
 
@@ -103,9 +103,9 @@ La respuesta del modelo se valida para asegurar valores conocidos de perfil, idi
 
 ```mermaid
 flowchart TD
-    A[Oferta analizada con Solicitud sencilla] --> B[Extraer preguntas]
+    A[Oferta analizada con Solicitud sencilla] --> B[Extraer preguntas: POST /api/v1/scraper/linkedin/easyapply/procesar]
     B --> C{¿Sigue disponible?}
-    C -- No --> D[Borrado lógico]
+    C -- No --> D[error: revisión manual]
     C -- Sí --> E{¿Hay preguntas?}
     E -- No --> F[lista_para_aplicar]
     E -- Sí --> G[pendientes_respuestas]
@@ -113,9 +113,16 @@ flowchart TD
     H --> I{¿Obligatorias resueltas?}
     I -- Sí --> F
     I -- No --> G
+    F --> J["Acción explícita: POST /api/v1/scraper/linkedin/easyapply/aplicar/{id}"]
+    J --> K{¿LinkedIn ya muestra la solicitud enviada?}
+    K -- Sí --> L[Sin pulsar Enviar: sincronizar como aplicada]
+    K -- No --> M[Rellenar formulario, seleccionar CV y pulsar Enviar]
+    M --> N{¿LinkedIn confirma el envío?}
+    N -- Sí --> P[Guardar como aplicada]
+    N -- No --> O[Error: envío no confirmado]
 ```
 
-Actualmente Easy Apply navega los pasos iniciales y extrae campos de texto, número, radio y select; después el agente genera respuestas propuestas. El rellenado automático de formularios y la selección o subida del CV todavía están en desarrollo. No pulsa los botones de revisión o envío. El agente comprueba que devuelva una respuesta para cada identificador de pregunta y que las opciones seleccionadas correspondan con las opciones reales. La aplicación final sigue siendo una acción manual y revisable.
+La extracción de preguntas y la preparación de respuestas no envían la candidatura. El agente comprueba que haya una respuesta para cada identificador de pregunta y que las opciones seleccionadas correspondan con las opciones reales. Solo la llamada explícita a `POST /api/v1/scraper/linkedin/easyapply/aplicar/{id}` inicia la aplicación: exige una oferta `lista_para_aplicar` con las respuestas obligatorias revisadas, rellena campos de texto, número, radio y select, selecciona el CV configurado que ya está en LinkedIn, avanza por la revisión y pulsa Enviar. Si LinkedIn confirma el envío, guarda `aplicada` y `fecha_aplicacion`; si la solicitud ya figuraba como enviada, sincroniza esos datos sin volver a pulsar Enviar. La subida de un CV aún no está implementada.
 
 ## Decisiones de diseño
 

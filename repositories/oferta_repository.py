@@ -115,6 +115,21 @@ def modificar_datos_oferta(db: Session, id: str, datos: dict):
 
     return oferta
 
+
+def modificar_si_estado(db: Session, id: str, estado: Estado, datos: dict) -> bool:
+    """Actualiza solo una oferta activa que siga en el estado esperado."""
+    actualizadas = (
+        db.query(Oferta)
+        .filter(
+            Oferta.id == id,
+            Oferta.estado == estado,
+            Oferta.eliminado.is_(False),
+        )
+        .update(datos, synchronize_session=False)
+    )
+    db.commit()
+    return actualizadas == 1
+
 # Función para obtener ofertas por estado, con un límite opcional
 def obtener_ofertas_estado(db: Session, estado: Estado, limite: Optional[int] = 10):
     query = db.query(Oferta).filter(

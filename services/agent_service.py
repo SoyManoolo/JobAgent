@@ -16,6 +16,10 @@ class RespuestaFormularioError(ValueError):
     pass
 
 
+class EstadoOfertaNoValidoError(ValueError):
+    pass
+
+
 class OllamaNoDisponibleError(RuntimeError):
     """Ollama no respondió correctamente tras los reintentos."""
 
@@ -69,8 +73,9 @@ def _marca_error_respuestas(funcion):
             return funcion(id, *args, **kwargs)
         except Exception as error:
             with SessionLocal() as db:
-                if oferta_repository.obtener_oferta_id(db, id) is not None:
-                    marcar_error_oferta(db, id)
+                oferta_repository.modificar_si_estado(
+                    db, id, Estado.PENDIENTE_RESPUESTAS, {"estado": Estado.ERROR}
+                )
             raise
 
     return envuelta
@@ -215,7 +220,7 @@ def validar_respuestas_formulario(
 
 
 # Función que analiza una oferta y persiste el resultado de la clasificación, determinando el estado final de la oferta según los criterios de idioma, score de encaje y perfil recomendado, y actualizando los datos relevantes en la base de datos.
-def _analizar_oferta(db, oferta):
+def _analizar_oferta(db, oferta, estado_requerido=None):
     """Analiza una oferta y persiste el resultado de la clasificación."""
     resultado = llm.analizar_oferta(oferta.descripcion)
 
@@ -240,6 +245,10 @@ def _analizar_oferta(db, oferta):
         "estado": estado_final,
     }
 
+    if estado_requerido is not None:
+        return oferta_repository.modificar_si_estado(
+            db, oferta.id, estado_requerido, datos_actualizar
+        )
     return oferta_repository.modificar_datos_oferta(db, oferta.id, datos_actualizar)
 
 
@@ -261,10 +270,21 @@ def procesar_oferta(id: str):
             if not oferta or oferta.eliminado:
                 return None
 
+            if oferta.estado != Estado.EXTRAIDA:
+                raise EstadoOfertaNoValidoError(
+                    "La oferta debe estar en estado extraida para analizarse"
+                )
+
             try:
-                return _analizar_oferta(db, oferta)
-            except Exception as error:
-                marcar_error_oferta(db, oferta.id)
+                if not _analizar_oferta(db, oferta, Estado.EXTRAIDA):
+                    raise EstadoOfertaNoValidoError(
+                        "La oferta debe seguir activa y en estado extraida para analizarse"
+                    )
+                return oferta_repository.obtener_oferta_id(db, id)
+            except Exception:
+                oferta_repository.modificar_si_estado(
+                    db, id, Estado.EXTRAIDA, {"estado": Estado.ERROR}
+                )
                 raise
     finally:
         _bloqueo_analisis.release()
@@ -304,8 +324,13 @@ def procesar_ofertas_extraidas(limite: int = 25):
 def responder_preguntas_oferta(id: str):
     with SessionLocal() as db:
         oferta = oferta_repository.obtener_oferta_id(db, id)
-        if not oferta:
+        if not oferta or oferta.eliminado:
             return None
+
+        if oferta.estado != Estado.PENDIENTE_RESPUESTAS:
+            raise RespuestaFormularioError(
+                "La oferta debe estar en estado pendientes_respuestas para responder"
+            )
 
         # Se obtiene el CV correspondiente al perfil recomendado y el idioma de la oferta.
         try:
@@ -368,17 +393,20 @@ def responder_preguntas_oferta(id: str):
         else Estado.PENDIENTE_RESPUESTAS
     )
     with SessionLocal() as db:
-        oferta_actualizada = oferta_repository.modificar_datos_oferta(
-            db,
-            id,
+        actualizada = oferta_repository.modificar_si_estado(
+            db, id, Estado.PENDIENTE_RESPUESTAS,
             {
                 "respuestas_formulario": respuestas["respuestas"],
                 "estado": estado_final,
             },
         )
-
-    if oferta_actualizada is None:
-        return None
+        if not actualizada:
+            oferta = oferta_repository.obtener_oferta_id(db, id)
+            if oferta is None or oferta.eliminado:
+                return None
+            raise RespuestaFormularioError(
+                "La oferta debe estar en estado pendientes_respuestas para responder"
+            )
 
     return {"respuestas": respuestas, "estado": estado_final.value}
 

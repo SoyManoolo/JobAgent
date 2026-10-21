@@ -16,7 +16,12 @@ def extraer_preguntas_pendientes(limite: int = 10):
 
 @router.post("/linkedin/easyapply/procesar/{id}", status_code=status.HTTP_200_OK)
 def extraer_preguntas_oferta(id: str):
-    return scraper_service.ejecutar_scraper_preguntas_linkedin(id)
+    try:
+        return scraper_service.ejecutar_scraper_preguntas_linkedin(id)
+    except scraper_service.OfertaNoEncontradaError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except scraper_service.EstadoOfertaNoValidoError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
 
 
 @router.post("/linkedin/easyapply/aplicar/{id}", status_code=status.HTTP_200_OK)

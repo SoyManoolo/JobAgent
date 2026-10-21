@@ -11,7 +11,6 @@ from database import SessionLocal
 from models import Estado
 from repositories import oferta_repository
 from services.retry import ejecutar_con_reintentos
-from services.oferta_service import marcar_error_oferta
 
 
 # Excepciones personalizadas para errores específicos relacionados con la ejecución del scraper y la aplicación a ofertas de trabajo.
@@ -20,6 +19,10 @@ class OfertaNoEncontradaError(ValueError):
 
 
 class OfertaNoListaParaAplicarError(ValueError):
+    pass
+
+
+class EstadoOfertaNoValidoError(ValueError):
     pass
 
 
@@ -52,69 +55,69 @@ def ejecutar_scraper_preguntas_linkedin(id: str):
     with SessionLocal() as db:
         oferta = oferta_repository.obtener_oferta_id(db, id)
 
-        if oferta is None:
-            raise ValueError("Oferta no encontrada")
+        if oferta is None or oferta.eliminado:
+            raise OfertaNoEncontradaError("Oferta no encontrada")
+
+        if oferta.estado != Estado.ANALIZADA:
+            raise EstadoOfertaNoValidoError(
+                "La oferta debe estar en estado analizada para extraer preguntas"
+            )
 
         if not oferta.aplicacion_sencilla:
             raise ValueError("La oferta no tiene solicitud sencilla")
 
-        # Llamar a la funcion 'ejecutar_con_reintentos' para extraer las preguntas del formulario de la oferta, manejando posibles errores temporales y excepciones específicas
-        try:
-            preguntas = ejecutar_con_reintentos(
-                lambda: extraer_preguntas(oferta.url),
-                "el scraper de preguntas de Easy Apply",
-                no_reintentar=(SolicitudNoDisponibleError,),
+        url = oferta.url
+
+    def actualizar_si_analizada(datos):
+        with SessionLocal() as db:
+            if oferta_repository.modificar_si_estado(db, id, Estado.ANALIZADA, datos):
+                return
+            actual = oferta_repository.obtener_oferta_id(db, id)
+            if actual is None or actual.eliminado:
+                raise OfertaNoEncontradaError("Oferta no encontrada")
+            raise EstadoOfertaNoValidoError(
+                "La oferta debe estar en estado analizada para extraer preguntas"
             )
 
-        except SolicitudNoDisponibleError as error:
-            marcar_error_oferta(db, id)
-
-            return {
-                "oferta_id": id,
-                "disponible": False,
-                "oferta_eliminada": False,
-                "error": str(error),
-            }
-        except Exception as error:
-            marcar_error_oferta(db, id)
-            raise
-
-        # Determinar el estado final de la oferta según si hay preguntas pendientes o no
-        estado_final = (
-            Estado.PENDIENTE_RESPUESTAS
-            if preguntas
-            else Estado.LISTA_PARA_APLICAR
+    # La navegación no conserva una sesión de base de datos abierta.
+    try:
+        preguntas = ejecutar_con_reintentos(
+            lambda: extraer_preguntas(url),
+            "el scraper de preguntas de Easy Apply",
+            no_reintentar=(SolicitudNoDisponibleError,),
         )
 
-        # Los selectores pertenecen a la sesión de Playwright que los generó.
-        # Se devuelven para diagnóstico, pero no se almacenan porque no son
-        # reutilizables en una sesión posterior
-        preguntas_persistibles = [
-            {
-                clave: valor
-                for clave, valor in pregunta.items()
-                if clave != "selector_temporal"
-            }
-            for pregunta in preguntas
-        ]
-
-        # Guardar las preguntas y el estado final de la oferta en la base de datos
-        resultado = oferta_repository.modificar_datos_oferta(
-            db,
-            id,
-            {
-                "preguntas_formulario": preguntas_persistibles,
-                "estado": estado_final,
-            },
-        )
-
+    except SolicitudNoDisponibleError as error:
+        actualizar_si_analizada({"estado": Estado.ERROR})
         return {
             "oferta_id": id,
-            "disponible": True,
-            "total_preguntas": len(preguntas),
-            "preguntas": preguntas,
-            "actualizada": resultado is not None,
+            "disponible": False,
+            "oferta_eliminada": False,
+            "error": str(error),
         }
+    except Exception:
+        actualizar_si_analizada({"estado": Estado.ERROR})
+        raise
+
+    estado_final = Estado.PENDIENTE_RESPUESTAS if preguntas else Estado.LISTA_PARA_APLICAR
+    # Los selectores de Playwright no son reutilizables en otra sesión.
+    preguntas_persistibles = [
+        {clave: valor for clave, valor in pregunta.items() if clave != "selector_temporal"}
+        for pregunta in preguntas
+    ]
+
+    actualizar_si_analizada({
+        "preguntas_formulario": preguntas_persistibles,
+        "estado": estado_final,
+    })
+
+    return {
+        "oferta_id": id,
+        "disponible": True,
+        "total_preguntas": len(preguntas),
+        "preguntas": preguntas,
+        "actualizada": True,
+    }
 
 
 # Función que ejecuta el scraper de LinkedIn para extraer las preguntas de varias ofertas pendientes de respuesta, hasta un límite especificado
@@ -184,14 +187,16 @@ def ejecutar_aplicacion_easy_apply(id: str):
 
         resultado = enviar_solicitud(oferta.url, preguntas, respuestas, nombre_cv)
 
-        oferta_repository.modificar_datos_oferta(
-            db,
-            id,
+        if not oferta_repository.modificar_si_estado(
+            db, id, Estado.LISTA_PARA_APLICAR,
             {
                 "estado": Estado.APLICADA,
                 "fecha_aplicacion": datetime.now(),
             },
-        )
+        ):
+            raise OfertaNoListaParaAplicarError(
+                "La oferta debe seguir activa y en estado lista_para_aplicar"
+            )
 
         return {
             "oferta_id": id,

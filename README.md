@@ -94,6 +94,20 @@ uvicorn main:app --reload
 
 La API estará disponible en `http://127.0.0.1:8000`; la documentación interactiva está en `http://127.0.0.1:8000/docs`.
 
+### Ejecución con Docker
+
+Con `agent/prompts/cv.py` configurado, construye la imagen y monta un volumen con nombre para conservar la base de datos al recrear el contenedor:
+
+```bash
+docker build -t jobagent .
+docker run --rm --name jobagent -p 8000:8000 \
+  -v jobagent-data:/app/data \
+  -v "$(pwd)/agent/prompts/cv.py:/app/agent/prompts/cv.py:ro" \
+  jobagent
+```
+
+El contenedor crea el esquema SQLite antes de iniciar la API. El archivo `data/jobagent.sqlite` queda en el volumen `jobagent-data` y se reutiliza en los siguientes arranques con el mismo volumen.
+
 Ejemplo de primera extracción:
 
 ```bash

@@ -281,6 +281,13 @@ def procesar_oferta(id: str):
                         "La oferta debe seguir activa y en estado extraida para analizarse"
                     )
                 return oferta_repository.obtener_oferta_id(db, id)
+            except requests.RequestException as error:
+                oferta_repository.modificar_si_estado(
+                    db, id, Estado.EXTRAIDA, {"estado": Estado.ERROR}
+                )
+                raise OllamaNoDisponibleError(
+                    "No se pudo completar la petición a Ollama después de los reintentos; comprueba OLLAMA_URL"
+                ) from error
             except Exception:
                 oferta_repository.modificar_si_estado(
                     db, id, Estado.EXTRAIDA, {"estado": Estado.ERROR}
@@ -361,7 +368,7 @@ def responder_preguntas_oferta(id: str):
             flush=True,
         )
         raise OllamaNoDisponibleError(
-            "Ollama no respondió después de los reintentos"
+            "No se pudo completar la petición a Ollama después de los reintentos; comprueba OLLAMA_URL"
         ) from error
     except (ValueError, KeyError, TypeError) as error:
         print(

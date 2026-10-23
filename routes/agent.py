@@ -28,6 +28,11 @@ def procesar_oferta(id: str):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
     except agent_service.EstadoOfertaNoValidoError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except agent_service.OllamaNoDisponibleError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error
 
     if not oferta:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Oferta no encontrada")

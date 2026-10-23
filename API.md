@@ -160,7 +160,7 @@ petición a Ollama.
 
 ### `POST /agent/ofertas/procesar/{id}`
 
-Analiza una única oferta activa identificada por su UUID mediante Ollama. Guarda los datos de clasificación y actualiza su estado a `analizada` o `descartada` según el resultado. Si el análisis falla, la oferta queda en estado `error` y la API responde con un error `500`.
+Analiza una única oferta activa identificada por su UUID mediante Ollama. Guarda los datos de clasificación y actualiza su estado a `analizada` o `descartada` según el resultado. Si el análisis falla, la oferta queda en estado `error`.
 
 ```bash
 curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-4c57-a1eb-05d4048899a5'
@@ -185,7 +185,8 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/agent/ofertas/procesar/bf3877ce-cc2d-
 
 - `404`: `{"detail":"Oferta no encontrada"}`. También se devuelve para ofertas eliminadas lógicamente.
 - `409`: ya hay otro análisis de ofertas en curso.
-- `500`: no se pudo completar el análisis; la oferta queda marcada como `error`.
+- `503`: no se pudo completar la petición a Ollama después de los reintentos; comprueba `OLLAMA_URL`.
+- `500`: otro fallo impidió completar el análisis; la oferta queda marcada como `error`.
 
 ### `POST /agent/ofertas/responder`
 
@@ -236,7 +237,7 @@ Errores del endpoint individual:
 - `404`: la oferta no existe.
 - `409`: la oferta no tiene perfil o idioma válidos para seleccionar el CV.
 - `502`: Ollama respondió, pero su JSON o sus respuestas no cumplen el contrato del formulario.
-- `503`: Ollama no respondió después de agotar los reintentos.
+- `503`: no se pudo completar la petición a Ollama después de los reintentos; comprueba `OLLAMA_URL`.
 
 ## Ofertas
 

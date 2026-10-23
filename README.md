@@ -96,15 +96,22 @@ La API estará disponible en `http://127.0.0.1:8000`; la documentación interact
 
 ### Ejecución con Docker
 
-Con `agent/prompts/cv.py` configurado, construye la imagen y monta un volumen con nombre para conservar la base de datos al recrear el contenedor:
+Con `agent/prompts/cv.py` configurado y Ollama ejecutándose en el host, elige un modelo instalado y permite que Ollama escuche en la interfaz a la que llega Docker. En Linux, inicia Ollama con `OLLAMA_HOST=0.0.0.0:11434 ollama serve` (detén antes otra instancia que use el mismo puerto). Limita el acceso a ese puerto a equipos de confianza.
+
+Construye la imagen y monta un volumen con nombre para conservar la base de datos al recrear el contenedor. Sustituye `nombre_del_modelo` por el nombre que muestra `ollama list`:
 
 ```bash
 docker build -t jobagent .
 docker run --rm --name jobagent -p 8000:8000 \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_URL=http://host.docker.internal:11434/api/chat \
+  -e OLLAMA_MODEL=nombre_del_modelo \
   -v jobagent-data:/app/data \
   -v "$(pwd)/agent/prompts/cv.py:/app/agent/prompts/cv.py:ro" \
   jobagent
 ```
+
+`host.docker.internal` resuelve al host desde el contenedor; en Linux lo proporciona `--add-host=host.docker.internal:host-gateway`. El `localhost` de `OLLAMA_URL` dentro del contenedor sería el propio contenedor. El archivo `.env` no se copia a la imagen: pasa también con `-e` cualquier otro ajuste de Ollama que necesites. Si Ollama no es accesible, el análisis o la generación individual de respuestas devuelve `503` con un mensaje que identifica la conexión a Ollama; las operaciones por lote contabilizan la oferta como error.
 
 El contenedor crea el esquema SQLite antes de iniciar la API. El archivo `data/jobagent.sqlite` queda en el volumen `jobagent-data` y se reutiliza en los siguientes arranques con el mismo volumen.
 

@@ -1,14 +1,16 @@
 from scraper.browser import crear_navegador
 
-# Codigo de prueba para verificar la funcionalidad del navegador y la interacción con la página web, navegando de manera manual
+def main():
+    playwright, _, context, page = crear_navegador(persistent=True, headless=False)
+    try:
+        page.goto("https://www.linkedin.com/jobs/", wait_until="domcontentloaded")
+        input("Inicia sesión en LinkedIn y pulsa ENTER para guardar el perfil y cerrar...")
+    finally:
+        try:
+            context.close()
+        finally:
+            playwright.stop()
 
-playwright, browser, context, page = crear_navegador(persistent=True)
 
-url = "https://www.linkedin.com/jobs/"
-
-page.goto(url, wait_until="domcontentloaded")
-
-input("Inspecciona la página y pulsa ENTER para cerrar...")
-
-context.close()
-playwright.stop()
+if __name__ == "__main__":
+    main()

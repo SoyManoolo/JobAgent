@@ -17,3 +17,4 @@ profile/
 README.md
 API.md
 ARCHITECTURE.md
+agent/prompts/cv.py

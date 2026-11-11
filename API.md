@@ -252,6 +252,8 @@ Devuelve ofertas no eliminadas, ordenadas de forma descendente por identificador
 | `estado` | enum | — | Filtra por estado. |
 | `perfil` | enum | — | Filtra por perfil recomendado. |
 | `score_min` | integer | — | Encaje mínimo. |
+| `orden` | enum | — | `fecha` o `score` descendentes, o `empresa` o `estado` ascendentes. Si se omite, ordena por ID descendente. |
+| `excluir_estados` | lista de enum | — | Estados omitidos del total y del resultado. Repite el parámetro para excluir varios. |
 | `empresa` | string | — | Coincidencia parcial, sin distinción de mayúsculas. |
 | `aplicacion_sencilla` | boolean | — | Filtra por Easy Apply. |
 

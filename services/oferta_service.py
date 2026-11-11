@@ -1,7 +1,7 @@
 from typing import Optional
 from database import SessionLocal
 from repositories import oferta_repository
-from models.oferta import Estado, PerfilRecomendado
+from models.oferta import Estado, OrdenOfertas, PerfilRecomendado
 
 
 # Excepciones personalizadas para errores específicos relacionados con la edición de respuestas de formularios asociados a ofertas de trabajo.
@@ -24,10 +24,14 @@ def obtener_ofertas(
     score_min: Optional[int] = None,
     empresa: Optional[str] = None,
     aplicacion_sencilla: Optional[bool] = None,
+    *,
+    orden: Optional[OrdenOfertas] = None,
+    excluir_estados: Optional[list[Estado]] = None,
 ):
     with SessionLocal() as db:
         ofertas, total = oferta_repository.devolver_ofertas(
-            db, pagina, limite, estado, perfil, score_min, empresa, aplicacion_sencilla
+            db, pagina, limite, estado, perfil, score_min, empresa, aplicacion_sencilla,
+            orden=orden, excluir_estados=excluir_estados,
         )
     return {"total": total, "pagina": pagina, "limite": limite, "resultados": ofertas}
 

@@ -1,7 +1,7 @@
 from typing import Optional
-from models.oferta import Estado, Oferta, PerfilRecomendado
+from models.oferta import Estado, Oferta, OrdenOfertas, PerfilRecomendado
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func
 import uuid
 from scraper.linkedin.url import validar_url_oferta_linkedin
 
@@ -151,6 +151,9 @@ def devolver_ofertas(
     score_min: Optional[int] = None,
     empresa: Optional[str] = None,
     aplicacion_sencilla: Optional[bool] = None,
+    *,
+    orden: Optional[OrdenOfertas] = None,
+    excluir_estados: Optional[list[Estado]] = None,
 ):
     # Calcula el desplazamiento para la paginación
     salto = (pagina - 1) * limite
@@ -164,6 +167,9 @@ def devolver_ofertas(
     # Aplica filtros según los parámetros proporcionados
     if estado is not None:
         query = query.filter(Oferta.estado == estado)
+
+    if excluir_estados:
+        query = query.filter(Oferta.estado.not_in(excluir_estados))
 
     if perfil is not None:
         query = query.filter(Oferta.perfil_recomendado == perfil)
@@ -180,8 +186,14 @@ def devolver_ofertas(
     # Obtiene el total de ofertas que cumplen con los filtros aplicados
     total = query.count()
 
-    # Obtiene las ofertas de trabajo ordenadas por ID en orden descendente, aplicando la paginación
-    ofertas = query.order_by(desc(Oferta.id)).offset(salto).limit(limite).all()
+    if orden is not None:
+        query = query.order_by({
+            OrdenOfertas.FECHA: Oferta.fecha_descubrimiento.desc(),
+            OrdenOfertas.SCORE: Oferta.score_encaje.desc().nulls_last(),
+            OrdenOfertas.EMPRESA: func.lower(Oferta.empresa).asc(),
+            OrdenOfertas.ESTADO: Oferta.estado.asc(),
+        }[orden])
+    ofertas = query.order_by(Oferta.id.desc()).offset(salto).limit(limite).all()
 
     return ofertas, total
 

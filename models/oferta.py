@@ -26,6 +26,13 @@ class PerfilRecomendado(str, PyEnum):
     DESCONOCIDO = "desconocido"
 
 
+class OrdenOfertas(str, PyEnum):
+    FECHA = "fecha"
+    SCORE = "score"
+    EMPRESA = "empresa"
+    ESTADO = "estado"
+
+
 # Modelo de la oferta de trabajo
 class Oferta(Base):
     __tablename__ = "ofertas"

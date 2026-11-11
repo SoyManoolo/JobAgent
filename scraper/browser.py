@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright
 
 
 # Funcion que crea un navegador web con Playwright
-def crear_navegador(persistent=False):
+def crear_navegador(persistent=False, *, headless=True):
     # Inicializar Playwright y lanzar un navegador Chromium
     playwright = sync_playwright().start()
 
@@ -11,7 +11,7 @@ def crear_navegador(persistent=False):
         browser = None
         context = playwright.chromium.launch_persistent_context(
             user_data_dir="profile",
-            headless=True,
+            headless=headless,
         )
 
         # Se reutiliza la primera página del contexto si ya existe, o se crea una nueva página si no hay ninguna abierta
@@ -19,8 +19,7 @@ def crear_navegador(persistent=False):
 
         return playwright, browser, context, page
 
-    # Se lanza un navegadir en modo headless (sin interfaz gráfica) y se crea un contexto de navegación y una página nueva
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(headless=headless)
 
     context = browser.new_context()
 

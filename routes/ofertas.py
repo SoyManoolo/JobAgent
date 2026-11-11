@@ -1,6 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException, status
-from models.oferta import Estado, PerfilRecomendado
+from fastapi import APIRouter, HTTPException, Query, status
+from models.oferta import Estado, OrdenOfertas, PerfilRecomendado
 from schemas.oferta_schema import RespuestaFormularioUpdate
 from services import oferta_service
 
@@ -16,9 +16,12 @@ def obtener_ofertas(
     score_min: Optional[int] = None,
     empresa: Optional[str] = None,
     aplicacion_sencilla: Optional[bool] = None,
+    orden: Optional[OrdenOfertas] = None,
+    excluir_estados: Optional[list[Estado]] = Query(default=None),
 ):
     return oferta_service.obtener_ofertas(
-        pagina, limite, estado, perfil, score_min, empresa, aplicacion_sencilla
+        pagina, limite, estado, perfil, score_min, empresa, aplicacion_sencilla,
+        orden=orden, excluir_estados=excluir_estados,
     )
 
 
